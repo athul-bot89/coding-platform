@@ -6,6 +6,11 @@ import {
   isFullscreen,
   requestFullscreen,
 } from "@/components/ProctorGuard";
+import {
+  violationLevel,
+  VIOLATION_BADGES,
+  VIOLATION_OVERLAY,
+} from "@/lib/proctor-config";
 
 interface Props {
   violationCount: number;
@@ -41,7 +46,9 @@ export function FullscreenGate({ violationCount, maxViolations, children }: Prop
     };
   }, []);
 
-  const remaining = maxViolations > 0 ? maxViolations - violationCount : null;
+  // The overlay used to lead with a 3xl "2 / 5". It now leads with how serious
+  // this is instead of how much room is left — see VIOLATION_OVERLAY.
+  const level = violationLevel(violationCount, maxViolations);
 
   return (
     <>
@@ -60,16 +67,12 @@ export function FullscreenGate({ violationCount, maxViolations, children }: Prop
               <strong className="text-red-400">the timer is still running.</strong>
             </p>
 
-            {maxViolations > 0 && (
+            {level !== "none" && (
               <div className="bg-red-950/50 border border-red-900 rounded-lg p-4 mb-6">
-                <div className="text-3xl font-bold text-red-400 mb-1">
-                  {violationCount} / {maxViolations}
+                <div className="text-sm font-semibold text-red-400 mb-1">
+                  {VIOLATION_BADGES[level]}
                 </div>
-                <div className="text-xs text-red-300">
-                  {remaining !== null && remaining <= 1
-                    ? "One more warning will submit your test automatically."
-                    : `warnings used — ${remaining} left before your test is submitted automatically.`}
-                </div>
+                <div className="text-xs text-red-300">{VIOLATION_OVERLAY[level]}</div>
               </div>
             )}
 

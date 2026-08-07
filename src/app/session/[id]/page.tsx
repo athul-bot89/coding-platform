@@ -32,6 +32,9 @@ import {
   FINISH_ATTEMPTS,
   FINISH_RETRY_MS,
   isSilentEvent,
+  violationLevel,
+  VIOLATION_MESSAGES,
+  VIOLATION_BADGES,
 } from "@/lib/proctor-config";
 
 /** Cadence of the grading poll, and how long it keeps asking before giving up. */
@@ -420,12 +423,10 @@ export default function SessionPage() {
         if (!body.counted) {
           if (!isSilentEvent(event)) flash(BLOCKED_MESSAGES[event] ?? BLOCKED_FALLBACK);
         } else if (event !== "fullscreen_exit") {
-          // The fullscreen overlay already shows its own counter.
-          flash(
-            body.maxViolations > 0
-              ? `Warning ${body.violationCount} of ${body.maxViolations} — this was recorded.`
-              : "This action was recorded."
-          );
+          // The fullscreen overlay says this itself, in its own copy.
+          // No tally here — see the note above VIOLATION_MESSAGES.
+          const level = violationLevel(body.violationCount, body.maxViolations);
+          if (level !== "none") flash(VIOLATION_MESSAGES[level]);
         }
       } catch (err) {
         // Never let a logging failure interfere with the test — but do not let an
@@ -448,6 +449,14 @@ export default function SessionPage() {
         const body = await postJson(`/api/session/${sessionId}/event`, next);
         pendingEvents.current.shift();
         setViolations({ count: body.violationCount, max: body.maxViolations });
+        // A violation that happened during an outage is still a violation the
+        // candidate has to be told about — otherwise the only notice they get
+        // is the auto-submit. Flushing several in a row settles on the last
+        // message, which is the most severe, so that is the right one to leave up.
+        if (body.counted) {
+          const level = violationLevel(body.violationCount, body.maxViolations);
+          if (level !== "none") flash(VIOLATION_MESSAGES[level]);
+        }
         if (body.terminated) {
           flash("Too many violations — your test has been submitted.");
           endTest("terminated");
@@ -1034,6 +1043,8 @@ export default function SessionPage() {
   const resultError = resultErrors[active.id] ?? null;
   const activeBusy = busy[active.id];
   const solvedCount = problems.filter((p) => p.solved).length;
+  // Tone only — the tally behind it is never rendered.
+  const violationBadgeLevel = violationLevel(violations.count, violations.max);
 
   return (
     <>
@@ -1055,9 +1066,15 @@ export default function SessionPage() {
                 unsyncedCount={unsyncedCount}
                 hasSaved={lastSyncedAt !== null}
               />
-              {violations.max > 0 && violations.count > 0 && (
-                <span className="text-xs px-2 py-1 rounded bg-red-950 text-red-300 border border-red-900">
-                  ⚠ {violations.count}/{violations.max} warnings
+              {violations.max > 0 && violationBadgeLevel !== "none" && (
+                <span
+                  className={`text-xs px-2 py-1 rounded border ${
+                    violationBadgeLevel === "noted"
+                      ? "bg-amber-950 text-amber-300 border-amber-900"
+                      : "bg-red-950 text-red-300 border-red-900"
+                  }`}
+                >
+                  ⚠ {VIOLATION_BADGES[violationBadgeLevel]}
                 </span>
               )}
               <div className="flex flex-col items-end gap-0.5">

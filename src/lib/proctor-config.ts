@@ -142,6 +142,68 @@ export const BLOCKED_MESSAGES: Record<string, string> = {
 
 export const BLOCKED_FALLBACK = "That action is disabled in this test.";
 
+// ---------------------------------------------------------------------------
+// Telling a candidate about a counted violation
+//
+// The running tally is never shown during a test. A visible "2/5" turns the
+// budget into a resource to spend: a candidate who knows three are left will
+// use them. Withholding the number keeps every violation feeling like it might
+// be the last one, which is the behaviour the budget exists to produce.
+//
+// What replaces it is tone, not silence. Every counted violation still says so
+// plainly, and the wording hardens as the limit approaches, so nobody is
+// auto-submitted without having been told they were close first.
+//
+// `maxViolations` is still sent to the browser — this is UI-level concealment,
+// not a secret. Anyone who reads the network response can recover the count,
+// and the pre-test instructions state the limit up front.
+// ---------------------------------------------------------------------------
+
+export type ViolationLevel = "none" | "logged" | "noted" | "close" | "final";
+
+/**
+ * How loudly to warn, given the tally the candidate is not allowed to see.
+ *
+ * `max <= 0` is auto-submit disabled for the whole assessment: the violation is
+ * still recorded for the report, but there is no limit to be close to, so the
+ * copy must not threaten a submission that cannot happen — hence "logged"
+ * rather than the escalating ladder.
+ */
+export function violationLevel(count: number, max: number): ViolationLevel {
+  if (count <= 0) return "none";
+  if (max <= 0) return "logged";
+  const remaining = max - count;
+  if (remaining <= 1) return "final";
+  if (remaining <= 2) return "close";
+  return "noted";
+}
+
+type WarnLevel = Exclude<ViolationLevel, "none">;
+
+/** Toast shown when a violation is counted. Deliberately free of digits. */
+export const VIOLATION_MESSAGES: Record<WarnLevel, string> = {
+  logged: "This action was recorded.",
+  noted: "Violation recorded. Repeated violations will submit your test automatically.",
+  close: "Violation recorded — you are close to having your test submitted automatically.",
+  final: "Final warning — the next violation will submit your test automatically.",
+};
+
+/** Persistent header chip. Short enough to sit next to the clock. */
+export const VIOLATION_BADGES: Record<WarnLevel, string> = {
+  logged: "Violation recorded",
+  noted: "Violation recorded",
+  close: "Close to the limit",
+  final: "Final warning",
+};
+
+/** Fullscreen/overlay copy — same escalation, room for a full sentence. */
+export const VIOLATION_OVERLAY: Record<WarnLevel, string> = {
+  logged: "This was recorded as a violation.",
+  noted: "This was recorded as a violation. Repeated violations will submit your test automatically.",
+  close: "This was recorded as a violation. You are close to having your test submitted automatically.",
+  final: "Final warning — the next violation will submit your test automatically.",
+};
+
 export const EVENT_LABELS: Record<string, string> = {
   fullscreen_exit: "Left fullscreen",
   tab_switch: "Switched tab",

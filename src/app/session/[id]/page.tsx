@@ -125,6 +125,7 @@ export default function SessionPage() {
   const [deadline, setDeadline] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [confirmFinish, setConfirmFinish] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [ending, setEnding] = useState(false);
 
   // ---- Connection state ----
@@ -730,6 +731,24 @@ export default function SessionPage() {
     [mirrorDraft]
   );
 
+  /**
+   * Throw away the current buffer and put the starter template for the language
+   * back. Deliberately not routed through `updateCode`: that one bails when the
+   * text is unchanged, and a reset has to mirror the draft even then so the
+   * stored copy can never survive a reset the editor already shows.
+   */
+  const resetCode = useCallback(
+    (problem: SessionProblem) => {
+      const languageId =
+        editorsRef.current[problem.id]?.languageId ?? problem.allowedLanguages[0];
+      const code = problem.starterCode[String(languageId)] ?? "";
+
+      mirrorDraft(problem.id, code, languageId);
+      setEditors((prev) => ({ ...prev, [problem.id]: { code, languageId } }));
+    },
+    [mirrorDraft]
+  );
+
   const switchQuestion = useCallback(
     (index: number) => {
       if (active) flushMetrics(active.id);
@@ -1170,6 +1189,14 @@ export default function SessionPage() {
 
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => setConfirmReset(true)}
+                    disabled={!!activeBusy}
+                    title="Restore the starter template for this question"
+                    className="px-3 py-1.5 bg-gray-700 rounded text-sm font-medium hover:bg-gray-600 disabled:opacity-50"
+                  >
+                    Reset code
+                  </button>
+                  <button
                     onClick={() => execute(active, "run")}
                     disabled={!!activeBusy}
                     className="px-4 py-1.5 bg-gray-700 rounded text-sm font-medium hover:bg-gray-600 disabled:opacity-50"
@@ -1209,6 +1236,38 @@ export default function SessionPage() {
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-red-600 text-white px-5 py-3 rounded-lg shadow-xl text-sm font-medium">
           ⚠️ {toast}
+        </div>
+      )}
+
+      {/* Reset confirmation */}
+      {confirmReset && (
+        <div className="fixed inset-0 z-[120] bg-black/80 flex items-center justify-center px-4">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-lg font-semibold mb-2">⚠️ Reset your code?</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Everything you have written for{" "}
+              <strong className="text-white">{active.title}</strong> in{" "}
+              <strong className="text-white">{languageName(editor.languageId)}</strong> is
+              discarded and the editor goes back to the starter template. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmReset(false)}
+                className="flex-1 px-4 py-2.5 bg-gray-700 rounded font-medium hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  resetCode(active);
+                  setConfirmReset(false);
+                }}
+                className="flex-1 px-4 py-2.5 bg-red-600 rounded font-medium hover:bg-red-700"
+              >
+                Reset code
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

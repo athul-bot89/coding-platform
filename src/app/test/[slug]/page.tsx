@@ -71,6 +71,7 @@ export default function TestPage() {
   const [violations, setViolations] = useState<string[]>([]);
   const [testStarted, setTestStarted] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const mounted = useRef(true);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -134,6 +135,12 @@ export default function TestPage() {
     }
 
     setSelectedLang(nextLang);
+  };
+
+  /** Put the starter template for the selected language back in the editor. */
+  const resetCode = () => {
+    setCode(problem?.starterCode?.[String(selectedLang)] ?? "");
+    setConfirmReset(false);
   };
 
   const handleStartTest = () => {
@@ -299,6 +306,14 @@ export default function TestPage() {
             ))}
           </select>
           <button
+            onClick={() => setConfirmReset(true)}
+            disabled={submitting}
+            title="Restore the starter template for this problem"
+            className="px-3 py-1.5 bg-gray-700 rounded text-sm font-medium hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Reset code
+          </button>
+          <button
             onClick={handleSubmit}
             disabled={submitting}
             className="px-4 py-1.5 bg-green-600 rounded text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -426,6 +441,34 @@ export default function TestPage() {
           )}
         </div>
       </div>
+
+      {/* Reset confirmation */}
+      {confirmReset && (
+        <div className="fixed inset-0 z-[120] bg-black/80 flex items-center justify-center px-4">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-lg font-semibold mb-2">⚠️ Reset your code?</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Everything you have written in{" "}
+              <strong className="text-white">{languageName(selectedLang)}</strong> is discarded
+              and the editor goes back to the starter template. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmReset(false)}
+                className="flex-1 px-4 py-2.5 bg-gray-700 rounded font-medium hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={resetCode}
+                className="flex-1 px-4 py-2.5 bg-red-600 rounded font-medium hover:bg-red-700"
+              >
+                Reset code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

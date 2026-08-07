@@ -4,8 +4,14 @@
 //
 // The admin gate lives here rather than being repeated per page, so no page can
 // be added later that forgets it, and children only mount once the role is
-// confirmed — a non-admin never sees a flash of the dashboard before the
-// redirect lands.
+// confirmed — a non-admin never sees a flash of the dashboard before the gate
+// decides.
+//
+// A signed-in non-admin is told so, rather than being bounced to /problems. The
+// bounce read as a flicker: the spinner, a half-drawn candidate page, and no
+// statement anywhere that the account simply lacks access. That is the usual
+// case of someone signed into their personal Google account instead of their
+// work one, so the screen names the account and offers the switch.
 
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -50,10 +56,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const [live, setLive] = useState<{ live: number; online: number } | null>(null);
 
+  // Only the signed-out case redirects — there is nothing to tell someone who
+  // has not identified themselves yet, and sign-in returns them here.
   useEffect(() => {
-    if (status === "unauthenticated") router.replace("/");
-    else if (status === "authenticated" && !isAdmin) router.replace("/problems");
-  }, [status, isAdmin, router]);
+    if (status === "unauthenticated") {
+      router.replace(`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`);
+    }
+  }, [status, router, pathname]);
 
   const pollLive = useCallback(async () => {
     try {
@@ -71,12 +80,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => clearInterval(t);
   }, [isAdmin, pollLive]);
 
-  if (status === "loading" || !isAdmin) {
+  if (status === "loading" || status === "unauthenticated") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-500" />
       </div>
     );
+  }
+
+  if (!isAdmin) {
+    return <AccessDenied email={session?.user?.email ?? null} />;
   }
 
   const isActive = (href: string, exact?: boolean) =>
@@ -172,6 +185,61 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function AccessDenied({ email }: { email: string | null }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+      <div className="max-w-md w-full bg-gray-800 border border-gray-700 rounded-xl p-8 text-center">
+        <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-950 border border-red-900 flex items-center justify-center">
+          <svg
+            className="w-6 h-6 text-red-400"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+        </div>
+
+        <h1 className="text-xl font-bold text-white">Access denied</h1>
+        <p className="mt-2 text-sm text-gray-400">
+          The admin panel is limited to staff accounts. This one is signed in as a candidate.
+        </p>
+
+        {email && (
+          <p className="mt-4 text-xs text-gray-500">
+            Signed in as <span className="text-gray-300 break-all">{email}</span>
+          </p>
+        )}
+
+        <div className="mt-6 flex flex-col gap-2">
+          <button
+            onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+            className="w-full px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm text-white"
+          >
+            Sign in with a different account
+          </button>
+          <Link
+            href="/problems"
+            className="w-full px-4 py-2 rounded border border-gray-700 hover:bg-gray-700/40 text-sm text-gray-300"
+          >
+            Go to candidate view
+          </Link>
+        </div>
+
+        <p className="mt-6 text-xs text-gray-600">
+          If you should have access, ask an existing admin to add this address under Users.
+        </p>
+      </div>
     </div>
   );
 }

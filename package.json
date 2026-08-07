@@ -9,6 +9,7 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:seed": "npx ts-node prisma/seed.ts",
+    "db:make-admin": "npx ts-node prisma/make-admin.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {

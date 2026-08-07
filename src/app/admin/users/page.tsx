@@ -5,6 +5,10 @@
 // Anyone who signs in with Google gets an account, so most rows here are
 // candidates rather than staff — the role toggle is the only lever, and the
 // activity columns are what tell the two apart at a glance.
+//
+// Admin can also be granted to someone with no account yet. That invite has no
+// User row to sit on, so it gets its own list below the table; without one, a
+// pending invite would be invisible and get sent twice.
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -23,21 +27,39 @@ interface Row {
   _count: { attempts: number; testSessions: number };
 }
 
+interface Invite {
+  email: string;
+  invitedBy: string | null;
+  createdAt: string;
+}
+
 export default function AdminUsersPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const myId = (session?.user as any)?.id as string | undefined;
 
   const [users, setUsers] = useState<Row[]>([]);
+  const [invites, setInvites] = useState<Invite[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
+  const [newEmail, setNewEmail] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
   const handleError = useCallback(
     (err: unknown, fallback: string) => {
-      if (err instanceof HttpError && (err.status === 401 || err.status === 403)) {
-        router.replace(err.status === 401 ? "/" : "/problems");
+      // 401 means the session is gone and there is nothing to show; 403 means
+      // this account lost admin mid-session, which is worth saying out loud
+      // rather than bouncing to the candidate view.
+      if (err instanceof HttpError && err.status === 401) {
+        router.replace("/auth/signin?callbackUrl=%2Fadmin%2Fusers");
+        return;
+      }
+      if (err instanceof HttpError && err.status === 403) {
+        setError("Access denied — this account is no longer an admin. Reload to sign in again.");
         return;
       }
       setError(errorMessage(err, fallback));
@@ -48,8 +70,9 @@ export default function AdminUsersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchJson<Row[]>("/api/admin/users");
-      setUsers(Array.isArray(data) ? data : []);
+      const data = await fetchJson<{ users: Row[]; invites: Invite[] }>("/api/admin/users");
+      setUsers(Array.isArray(data?.users) ? data.users : []);
+      setInvites(Array.isArray(data?.invites) ? data.invites : []);
       setError(null);
     } catch (err) {
       handleError(err, "Could not load users.");
@@ -79,6 +102,47 @@ export default function AdminUsersPage() {
       await postJson("/api/admin/users", { userId: u.id, role: next }, { method: "PATCH" });
     } catch (err) {
       handleError(err, "Could not change that user's role.");
+      return;
+    } finally {
+      setBusyId(null);
+    }
+    load();
+  };
+
+  const addAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = newEmail.trim();
+    if (!email || adding) return;
+
+    setAdding(true);
+    setNotice(null);
+    try {
+      const res = await postJson<{ status: string; email: string }>("/api/admin/users", { email });
+      setNewEmail("");
+      setNotice(
+        res.status === "promoted"
+          ? `${res.email} is now an admin.`
+          : res.status === "already-admin"
+          ? `${res.email} already had admin.`
+          : `${res.email} has no account yet — they become an admin the first time they sign in.`
+      );
+      setError(null);
+    } catch (err) {
+      handleError(err, "Could not add that admin.");
+      return;
+    } finally {
+      setAdding(false);
+    }
+    load();
+  };
+
+  const cancelInvite = async (email: string) => {
+    setBusyId(email);
+    setNotice(null);
+    try {
+      await fetchJson(`/api/admin/users?email=${encodeURIComponent(email)}`, { method: "DELETE" });
+    } catch (err) {
+      handleError(err, "Could not cancel that invite.");
       return;
     } finally {
       setBusyId(null);
@@ -129,6 +193,57 @@ export default function AdminUsersPage() {
           <p className="text-sm text-red-400 bg-red-950/40 border border-red-900 rounded px-3 py-2">
             {error}
           </p>
+        )}
+        {notice && (
+          <p className="text-sm text-green-400 bg-green-950/40 border border-green-900 rounded px-3 py-2">
+            {notice}
+          </p>
+        )}
+
+        <Panel title="Add an admin">
+          <form onSubmit={addAdmin} className="p-4 flex flex-wrap items-center gap-2">
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="name@company.com"
+              disabled={adding}
+              className="flex-1 min-w-[16rem] bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={adding || !newEmail.trim()}
+              className="px-4 py-1.5 rounded bg-purple-700 hover:bg-purple-600 text-sm disabled:opacity-40"
+            >
+              {adding ? "Adding…" : "Grant admin"}
+            </button>
+            <p className="w-full text-xs text-gray-500">
+              Works whether or not they have signed in before. An address with no account yet is
+              held as a pending invite and promoted automatically on first Google sign-in.
+            </p>
+          </form>
+        </Panel>
+
+        {invites.length > 0 && (
+          <Panel title="Pending invites" count={`${invites.length}`}>
+            <ul className="divide-y divide-gray-700/60">
+              {invites.map((inv) => (
+                <li key={inv.email} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                  <span className="truncate">{inv.email}</span>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    invited {timeAgo(inv.createdAt)}
+                  </span>
+                  <button
+                    onClick={() => cancelInvite(inv.email)}
+                    disabled={busyId === inv.email}
+                    className="ml-auto text-xs px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-40 whitespace-nowrap"
+                  >
+                    {busyId === inv.email ? "Cancelling…" : "Cancel"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Panel>
         )}
 
         <Panel title="Accounts" count={needle ? `${visible.length} matching` : undefined}>

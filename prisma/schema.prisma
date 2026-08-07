@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -52,6 +52,19 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// An email that becomes an admin the moment it first signs in with Google.
+///
+/// Admin cannot be granted by inserting a User row ahead of time: NextAuth
+/// refuses to attach a Google account to an existing user that has no linked
+/// Account, and the sign-in fails with OAuthAccountNotLinked. So a person who
+/// has never logged in is parked here instead, and `events.createUser` in
+/// src/lib/auth.ts promotes them and clears the row on their first sign-in.
+model AdminInvite {
+  email     String   @id // stored lowercased; compared against the Google profile email
+  invitedBy String? // User.id of the admin who added it, kept for the audit trail
+  createdAt DateTime @default(now())
 }
 
 model Problem {

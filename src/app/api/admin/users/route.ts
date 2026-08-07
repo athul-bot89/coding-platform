@@ -6,19 +6,34 @@ export async function GET() {
   const guard = await requireAdmin();
   if (guard.error) return guard.error;
 
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      role: true,
-      _count: { select: { attempts: true } },
-    },
-    orderBy: { name: "asc" },
-  });
+  const [users, activity] = await Promise.all([
+    prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        _count: { select: { attempts: true, testSessions: true } },
+      },
+      orderBy: { name: "asc" },
+    }),
+    // Last heartbeat across all of a user's runs. Grouped rather than joined so
+    // the cost does not grow with the number of accounts.
+    prisma.testSession.groupBy({
+      by: ["userId"],
+      _max: { lastSeenAt: true, startedAt: true },
+    }),
+  ]);
 
-  return NextResponse.json(users);
+  const lastSeenById = new Map(activity.map((a) => [a.userId, a._max.lastSeenAt]));
+
+  return NextResponse.json(
+    users.map((u) => ({
+      ...u,
+      lastSeenAt: lastSeenById.get(u.id) ?? null,
+    }))
+  );
 }
 
 export async function PATCH(req: NextRequest) {

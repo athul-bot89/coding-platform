@@ -14,24 +14,29 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
     include: {
       problems: true,
-      sessions: { select: { state: true } },
+      sessions: { select: { state: true, violationCount: true } },
     },
   });
 
   return NextResponse.json(
-    assessments.map((a) => ({
-      id: a.id,
-      title: a.title,
-      durationMinutes: a.durationMinutes,
-      maxViolations: a.maxViolations,
-      isActive: a.isActive,
-      createdAt: a.createdAt,
-      questionCount: a.problems.length,
-      totalPoints: a.problems.reduce((s, p) => s + p.points, 0),
-      joinUrl: testUrl(a.joinToken),
-      startedCount: a.sessions.length,
-      completedCount: a.sessions.filter((s) => s.state !== "in_progress").length,
-    }))
+    assessments.map((a) => {
+      const finished = a.sessions.filter((s) => s.state !== "in_progress");
+      return {
+        id: a.id,
+        title: a.title,
+        durationMinutes: a.durationMinutes,
+        maxViolations: a.maxViolations,
+        isActive: a.isActive,
+        createdAt: a.createdAt,
+        questionCount: a.problems.length,
+        totalPoints: a.problems.reduce((s, p) => s + p.points, 0),
+        joinUrl: testUrl(a.joinToken),
+        startedCount: a.sessions.length,
+        inProgressCount: a.sessions.length - finished.length,
+        completedCount: finished.length,
+        flaggedCount: a.sessions.filter((s) => s.violationCount > 0).length,
+      };
+    })
   );
 }
 

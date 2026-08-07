@@ -1,9 +1,11 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { CopyButton } from "@/components/AdminUI";
 import { fetchJson, postJson, errorMessage, HttpError } from "@/lib/fetch-json";
 import { DEFAULT_MAX_VIOLATIONS } from "@/lib/proctor-config";
 
@@ -18,7 +20,9 @@ interface AssessmentRow {
   totalPoints: number;
   joinUrl: string;
   startedCount: number;
+  inProgressCount: number;
   completedCount: number;
+  flaggedCount: number;
 }
 
 export default function AssessmentsPage() {
@@ -90,26 +94,20 @@ export default function AssessmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <header className="border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          Code<span className="text-green-500">Test</span>
-          <span className="text-sm text-purple-400 ml-2">Tests</span>
-        </h1>
-        <div className="flex gap-3">
-          <button
-            onClick={() => router.push("/admin")}
-            className="px-4 py-2 bg-gray-700 rounded-lg text-sm hover:bg-gray-600"
-          >
-            Admin dashboard
-          </button>
-          <button
-            onClick={() => setCreating((c) => !c)}
-            className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700"
-          >
-            {creating ? "Cancel" : "+ New test"}
-          </button>
+    <div>
+      <header className="border-b border-gray-700 px-6 py-4 flex items-center justify-between gap-4 flex-wrap sticky top-0 bg-gray-900 z-10">
+        <div>
+          <h1 className="text-xl font-bold">Tests</h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {rows.length} test{rows.length === 1 ? "" : "s"} · each has one shared link
+          </p>
         </div>
+        <button
+          onClick={() => setCreating((c) => !c)}
+          className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700"
+        >
+          {creating ? "Cancel" : "+ New test"}
+        </button>
       </header>
 
       <main className="p-6 max-w-5xl">
@@ -193,18 +191,37 @@ export default function AssessmentsPage() {
         ) : (
           <div className="space-y-3">
             {rows.map((a) => (
-              <button
+              <div
                 key={a.id}
-                onClick={() => router.push(`/admin/assessments/${a.id}`)}
-                className="w-full text-left bg-gray-800 border border-gray-700 rounded-xl p-4 hover:border-gray-600 transition-colors"
+                className="bg-gray-800 border border-gray-700 rounded-xl p-4 hover:border-gray-600 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold truncate">{a.title}</h3>
-                      {!a.isActive && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-400">
-                          closed
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Link
+                        href={`/admin/assessments/${a.id}`}
+                        className="font-semibold truncate hover:text-green-400"
+                      >
+                        {a.title}
+                      </Link>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded ${
+                          a.isActive
+                            ? "bg-green-900 text-green-300"
+                            : "bg-gray-700 text-gray-400"
+                        }`}
+                      >
+                        {a.isActive ? "open" : "closed"}
+                      </span>
+                      {a.inProgressCount > 0 && (
+                        <span className="flex items-center gap-1.5 text-xs px-2 py-0.5 rounded bg-blue-900 text-blue-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                          {a.inProgressCount} in a test now
+                        </span>
+                      )}
+                      {a.questionCount === 0 && (
+                        <span className="text-xs text-yellow-500">
+                          no questions — link will not open
                         </span>
                       )}
                     </div>
@@ -212,17 +229,40 @@ export default function AssessmentsPage() {
                       {a.questionCount} question{a.questionCount === 1 ? "" : "s"} ·{" "}
                       {a.totalPoints} pts · {a.durationMinutes} min ·{" "}
                       {a.maxViolations === 0 ? "no auto-submit" : `${a.maxViolations} warnings`}
+                      {a.flaggedCount > 0 && (
+                        <span className="text-red-400"> · {a.flaggedCount} flagged</span>
+                      )}
                     </p>
+                    <code className="block mt-2 text-[11px] text-green-400/80 truncate max-w-full">
+                      {a.joinUrl}
+                    </code>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-sm">
-                      <span className="text-green-400 font-mono">{a.completedCount}</span>
-                      <span className="text-gray-600 font-mono">/{a.startedCount}</span>
+                  <div className="text-right shrink-0 space-y-2">
+                    <div>
+                      <div className="text-sm">
+                        <span className="text-green-400 font-mono">{a.completedCount}</span>
+                        <span className="text-gray-600 font-mono">/{a.startedCount}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">completed</div>
                     </div>
-                    <div className="text-xs text-gray-500">completed</div>
+                    <div className="flex gap-2 justify-end">
+                      <CopyButton text={a.joinUrl} />
+                      <Link
+                        href={`/admin/assessments/${a.id}/leaderboard`}
+                        className="text-xs px-2.5 py-1 bg-purple-900/60 rounded hover:bg-purple-900 whitespace-nowrap"
+                      >
+                        Leaderboard
+                      </Link>
+                      <Link
+                        href={`/admin/assessments/${a.id}`}
+                        className="text-xs px-2.5 py-1 bg-gray-700 rounded hover:bg-gray-600 whitespace-nowrap"
+                      >
+                        Edit
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}

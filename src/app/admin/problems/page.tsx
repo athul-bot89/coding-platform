@@ -78,29 +78,24 @@ export default function AdminProblemsPage() {
     );
   }
 
+  const activeCount = problems.filter((p) => p.isActive).length;
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <header className="border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">
-            Code<span className="text-green-500">Test</span>
-            <span className="text-sm text-purple-400 ml-2">Problem Bank</span>
-          </h1>
+    <div>
+      <header className="border-b border-gray-700 px-6 py-4 flex items-center justify-between gap-4 flex-wrap sticky top-0 bg-gray-900 z-10">
+        <div>
+          <h1 className="text-xl font-bold">Problem bank</h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {problems.length} problem{problems.length === 1 ? "" : "s"} · {activeCount} available to
+            put in a test
+          </p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => router.push("/admin/problems/new")}
-            className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700"
-          >
-            + New Problem
-          </button>
-          <button
-            onClick={() => router.push("/admin")}
-            className="px-4 py-2 bg-gray-700 rounded-lg text-sm hover:bg-gray-600"
-          >
-            ← Admin Dashboard
-          </button>
-        </div>
+        <button
+          onClick={() => router.push("/admin/problems/new")}
+          className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700"
+        >
+          + New problem
+        </button>
       </header>
 
       <main className="p-6">

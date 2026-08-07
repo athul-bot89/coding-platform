@@ -121,6 +121,125 @@ export interface PerProblemScore {
   submissions: number;
 }
 
+/**
+ * Time the candidate actually had, capped at their deadline.
+ *
+ * A run that was never submitted from the candidate's side is only stamped when
+ * a sweep notices, so the raw difference grows until someone opens an admin
+ * page. Nobody can work past the buzzer, so the deadline is the ceiling.
+ */
+export function sessionElapsedMs(
+  s: { startedAt: Date; submittedAt: Date | null; endsAt: Date },
+  now = Date.now()
+): number {
+  const end = Math.min((s.submittedAt ?? new Date(now)).getTime(), s.endsAt.getTime());
+  return Math.max(0, end - s.startedAt.getTime());
+}
+
+export interface SessionScoreSummary {
+  /** Points earned per question, keyed by problemId. */
+  perProblem: Record<string, number>;
+  totalScore: number;
+  maxScore: number;
+  solvedCount: number;
+  questionCount: number;
+  submissionCount: number;
+}
+
+/**
+ * Score any number of sessions in three queries, whichever tests they belong to.
+ *
+ * `computeSessionScore` is the same rule for one session and costs a round-trip
+ * per call, which is fine on a session page and quadratic on a dashboard listing
+ * every candidate. Returns one entry per input session, so callers can index the
+ * map without a null check.
+ *
+ * Scores are computed rather than read from `TestSession.totalScore`, which is
+ * only written at finalization — a candidate still working would otherwise sit
+ * at zero for the whole test. The two agree once a run ends.
+ */
+export async function summarizeSessions(
+  sessions: { id: string; assessmentId: string }[]
+): Promise<Map<string, SessionScoreSummary>> {
+  const out = new Map<string, SessionScoreSummary>();
+  if (sessions.length === 0) return out;
+
+  const sessionIds = sessions.map((s) => s.id);
+  const assessmentIds = Array.from(new Set(sessions.map((s) => s.assessmentId)));
+
+  const [served, liveSets, attempts] = await Promise.all([
+    prisma.sessionProblem.findMany({
+      where: { sessionId: { in: sessionIds } },
+      select: { sessionId: true, problemId: true, points: true, ordinal: true },
+      orderBy: { ordinal: "asc" },
+    }),
+    // Fallback for sessions that predate the snapshot, matching loadSessionProblems.
+    prisma.assessmentProblem.findMany({
+      where: { assessmentId: { in: assessmentIds } },
+      select: { assessmentId: true, problemId: true, points: true, ordinal: true },
+      orderBy: { ordinal: "asc" },
+    }),
+    prisma.attempt.findMany({
+      where: { sessionId: { in: sessionIds }, kind: "submit", state: "done" },
+      select: { sessionId: true, problemId: true, score: true, maxScore: true },
+    }),
+  ]);
+
+  const servedBySession = new Map<string, { problemId: string; points: number }[]>();
+  for (const sp of served) {
+    const list = servedBySession.get(sp.sessionId) ?? [];
+    list.push({ problemId: sp.problemId, points: sp.points });
+    servedBySession.set(sp.sessionId, list);
+  }
+
+  const setByAssessment = new Map<string, { problemId: string; points: number }[]>();
+  for (const ap of liveSets) {
+    const list = setByAssessment.get(ap.assessmentId) ?? [];
+    list.push({ problemId: ap.problemId, points: ap.points });
+    setByAssessment.set(ap.assessmentId, list);
+  }
+
+  // Best ratio per (session, problem) — retrying near the buzzer can only help.
+  const bestRatio = new Map<string, number>();
+  const submissionCounts = new Map<string, number>();
+  for (const a of attempts) {
+    if (!a.sessionId) continue;
+    const key = `${a.sessionId}:${a.problemId}`;
+    const ratio = a.maxScore > 0 ? a.score / a.maxScore : 0;
+    bestRatio.set(key, Math.max(bestRatio.get(key) ?? 0, ratio));
+    submissionCounts.set(a.sessionId, (submissionCounts.get(a.sessionId) ?? 0) + 1);
+  }
+
+  for (const s of sessions) {
+    const mine = servedBySession.get(s.id) ?? setByAssessment.get(s.assessmentId) ?? [];
+
+    const perProblem: Record<string, number> = {};
+    let totalScore = 0;
+    let maxScore = 0;
+    let solvedCount = 0;
+
+    for (const sp of mine) {
+      const ratio = bestRatio.get(`${s.id}:${sp.problemId}`) ?? 0;
+      const earned = Math.round(ratio * sp.points);
+      perProblem[sp.problemId] = earned;
+      totalScore += earned;
+      maxScore += sp.points;
+      if (ratio >= 1) solvedCount += 1;
+    }
+
+    out.set(s.id, {
+      perProblem,
+      totalScore,
+      maxScore,
+      solvedCount,
+      questionCount: mine.length,
+      submissionCount: submissionCounts.get(s.id) ?? 0,
+    });
+  }
+
+  return out;
+}
+
 /** End a session for good: drain any in-flight grading and freeze the score. */
 export async function finalizeSession(sessionId: string, state: SessionEndState) {
   const existing = await prisma.testSession.findUnique({ where: { id: sessionId } });
@@ -253,19 +372,9 @@ export async function buildLeaderboard(assessmentId: string) {
 
   if (!assessment) return null;
 
-  const sessionIds = sessions.map((s) => s.id);
-
-  const [served, attempts] = await Promise.all([
-    prisma.sessionProblem.findMany({
-      where: { sessionId: { in: sessionIds } },
-      include: { problem: { select: { title: true } } },
-      orderBy: { ordinal: "asc" },
-    }),
-    prisma.attempt.findMany({
-      where: { sessionId: { in: sessionIds }, kind: "submit", state: "done" },
-      select: { sessionId: true, problemId: true, score: true, maxScore: true },
-    }),
-  ]);
+  const summaries = await summarizeSessions(
+    sessions.map((s) => ({ id: s.id, assessmentId: s.assessmentId }))
+  );
 
   // Columns come from the assessment's current question list, so the table has a
   // stable shape. A candidate served a question that has since been removed still
@@ -277,77 +386,28 @@ export async function buildLeaderboard(assessmentId: string) {
     points: ap.points,
   }));
 
-  const servedBySession = new Map<string, typeof served>();
-  for (const sp of served) {
-    const list = servedBySession.get(sp.sessionId) ?? [];
-    list.push(sp);
-    servedBySession.set(sp.sessionId, list);
-  }
-
-  // Best ratio per (session, problem) — retrying near the buzzer can only help.
-  const bestRatio = new Map<string, number>();
-  const submissionCounts = new Map<string, number>();
-  for (const a of attempts) {
-    if (!a.sessionId) continue;
-    const key = `${a.sessionId}:${a.problemId}`;
-    const ratio = a.maxScore > 0 ? a.score / a.maxScore : 0;
-    bestRatio.set(key, Math.max(bestRatio.get(key) ?? 0, ratio));
-    submissionCounts.set(a.sessionId, (submissionCounts.get(a.sessionId) ?? 0) + 1);
-  }
-
+  // One timestamp for the whole table, so live rows are all measured against the
+  // same instant rather than drifting apart row by row.
   const now = Date.now();
 
   const rows = sessions.map((s) => {
-    // Fall back to the live question set for sessions predating the snapshot,
-    // exactly as loadSessionProblems does.
-    const mine =
-      servedBySession.get(s.id) ??
-      assessment.problems.map((ap) => ({
-        sessionId: s.id,
-        problemId: ap.problemId,
-        ordinal: ap.ordinal,
-        points: ap.points,
-        problem: { title: ap.problem.title },
-      }));
-
-    const perProblem: Record<string, number> = {};
-    let totalScore = 0;
-    let maxScore = 0;
-    let solvedCount = 0;
-
-    for (const sp of mine) {
-      const ratio = bestRatio.get(`${s.id}:${sp.problemId}`) ?? 0;
-      const earned = Math.round(ratio * sp.points);
-      perProblem[sp.problemId] = earned;
-      totalScore += earned;
-      maxScore += sp.points;
-      if (ratio >= 1) solvedCount += 1;
-    }
-
-    const live = s.state === "in_progress";
-
+    const sum = summaries.get(s.id)!;
     return {
       sessionId: s.id,
       candidateName: s.candidateName,
       candidateEmail: s.candidateEmail,
       image: s.user?.image ?? null,
       state: s.state,
-      totalScore,
-      maxScore,
-      perProblem,
-      solvedCount,
-      submissionCount: submissionCounts.get(s.id) ?? 0,
+      totalScore: sum.totalScore,
+      maxScore: sum.maxScore,
+      perProblem: sum.perProblem,
+      solvedCount: sum.solvedCount,
+      submissionCount: sum.submissionCount,
       violationCount: s.violationCount,
       startedAt: s.startedAt,
       submittedAt: s.submittedAt,
-      // Capped at the deadline: someone who walked away cannot have used more
-      // time than the test allowed, however long before anyone looked.
-      elapsedMs: Math.max(
-        0,
-        Math.min((s.submittedAt ?? new Date(now)).getTime(), s.endsAt.getTime()) -
-          s.startedAt.getTime()
-      ),
-      live,
+      elapsedMs: sessionElapsedMs(s, now),
+      live: s.state === "in_progress",
     };
   });
 

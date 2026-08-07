@@ -1,342 +1,629 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { fetchJson, postJson, errorMessage, HttpError } from "@/lib/fetch-json";
-import { languageShortName } from "@/lib/languages";
+// The admin landing page: what is happening right now, then what happened.
+//
+// Live candidates come first and everything else reads as context around them —
+// this is a proctored platform, and the question an admin opens it with during a
+// test window is "who is in there and is anything going wrong".
 
-interface AttemptSummary {
-  id: string;
-  user: { id: string; name: string; email: string; image: string };
-  problem: { title: string; slug: string };
-  languageId: number;
-  state: string;
-  score: number;
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import {
+  Bar,
+  CopyButton,
+  Empty,
+  Panel,
+  Score,
+  SessionStateBadge,
+  StatTile,
+  WarningCount,
+  clock,
+  dateTime,
+  percent,
+  scoreColor,
+  shortDuration,
+  timeAgo,
+  useTicker,
+} from "@/components/AdminUI";
+import { errorMessage, fetchJson, HttpError } from "@/lib/fetch-json";
+import { EVENT_LABELS, ONLINE_GRACE_MS } from "@/lib/proctor-config";
+
+interface LiveRow {
+  sessionId: string;
+  candidateName: string;
+  candidateEmail: string;
+  image: string | null;
+  assessmentId: string;
+  assessmentTitle: string;
+  startedAt: string;
+  endsAt: string;
+  lastSeenAt: string;
+  idleMs: number;
+  violationCount: number;
+  maxViolations: number;
+  totalScore: number;
   maxScore: number;
-  createdAt: string;
-  finishedAt: string | null;
-  runsSummary: { total: number; passed: number; failed: number; pending: number };
+  solvedCount: number;
+  questionCount: number;
+  submissionCount: number;
 }
 
-interface ProctorEvent {
+interface TestRow {
   id: string;
-  userId: string;
-  attemptId: string | null;
+  title: string;
+  isActive: boolean;
+  durationMinutes: number;
+  maxViolations: number;
+  createdAt: string;
+  joinUrl: string;
+  questionCount: number;
+  totalPoints: number;
+  startedCount: number;
+  inProgressCount: number;
+  completedCount: number;
+  flaggedCount: number;
+  avgScorePct: number | null;
+  lastStartedAt: string | null;
+}
+
+interface RecentRow {
+  sessionId: string;
+  candidateName: string;
+  candidateEmail: string;
+  assessmentId: string;
+  assessmentTitle: string;
+  state: string;
+  totalScore: number;
+  maxScore: number;
+  violationCount: number;
+  submittedAt: string | null;
+  elapsedMs: number;
+}
+
+interface EventRow {
+  id: string;
   event: string;
   detail: string | null;
+  counted: boolean;
   createdAt: string;
+  sessionId: string | null;
+  candidateName: string | null;
+  assessmentTitle: string | null;
 }
 
-interface UserInfo {
-  id: string;
-  name: string;
-  email: string;
-  image: string;
-  role: string;
-  _count: { attempts: number };
+interface Overview {
+  serverNow: number;
+  kpis: {
+    liveNow: number;
+    onlineNow: number;
+    flaggedLive: number;
+    openTests: number;
+    totalTests: number;
+    candidates: number;
+    completed: number;
+    sessionsToday: number;
+    submissionsToday: number;
+    flaggedTotal: number;
+    avgScorePct: number | null;
+    problemsTotal: number;
+    problemsActive: number;
+  };
+  live: LiveRow[];
+  tests: TestRow[];
+  recent: RecentRow[];
+  events: EventRow[];
 }
 
-export default function AdminPage() {
-  const { data: session, status } = useSession();
+/** Poll fast enough to invigilate; slow right down when there is nothing to watch. */
+const REFRESH_LIVE_MS = 15_000;
+const REFRESH_IDLE_MS = 60_000;
+
+/** A countdown below this is the reason you are looking at the screen. */
+const ENDING_SOON_MS = 5 * 60_000;
+const HALFWAY_WARN_MS = 15 * 60_000;
+
+export default function AdminOverviewPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<"attempts" | "events" | "users">("attempts");
-  const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
-  const [events, setEvents] = useState<ProctorEvent[]>([]);
-  const [users, setUsers] = useState<UserInfo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [auto, setAuto] = useState(true);
+  const [loadedAt, setLoadedAt] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    } else if (session && (session.user as any)?.role !== "admin") {
-      router.push("/problems");
-    }
-  }, [status, session, router]);
+  // Countdowns run off the server's clock. A browser several minutes out would
+  // otherwise show a candidate more or less time than they actually have.
+  const skewRef = useRef(0);
 
-  useEffect(() => {
-    if (session && (session.user as any)?.role === "admin") {
-      loadData();
-    }
-  }, [session, tab]);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async () => {
+    setRefreshing(true);
     try {
-      if (tab === "attempts") {
-        const data = await fetchJson<{ attempts: AttemptSummary[] }>("/api/admin/attempts");
-        setAttempts(Array.isArray(data?.attempts) ? data.attempts : []);
-      } else if (tab === "events") {
-        const data = await fetchJson<{ events: ProctorEvent[] }>("/api/admin/proctor-events");
-        setEvents(Array.isArray(data?.events) ? data.events : []);
-      } else if (tab === "users") {
-        const data = await fetchJson<UserInfo[]>("/api/admin/users");
-        setUsers(Array.isArray(data) ? data : []);
+      const body = await fetchJson<Overview>("/api/admin/overview");
+      skewRef.current = Date.now() - body.serverNow;
+      setData({
+        ...body,
+        live: Array.isArray(body.live) ? body.live : [],
+        tests: Array.isArray(body.tests) ? body.tests : [],
+        recent: Array.isArray(body.recent) ? body.recent : [],
+        events: Array.isArray(body.events) ? body.events : [],
+      });
+      setLoadedAt(Date.now());
+      setError(null);
+    } catch (err) {
+      // The layout owns the admin gate, so a 401 or 403 here means this browser
+      // just lost the role — let it redirect rather than showing a dead retry.
+      if (err instanceof HttpError && (err.status === 401 || err.status === 403)) {
+        router.replace(err.status === 401 ? "/" : "/problems");
+        return;
       }
-    } catch (err) {
-      handleLoadError(err, "Could not load admin data.");
+      setError(errorMessage(err, "Could not load the dashboard."));
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [router]);
 
-  // The role cached in the session can outlive the server's view of it, so a 401
-  // or 403 here means this browser is no longer an admin — leave the page rather
-  // than letting an error body reach the table renderers.
-  const handleLoadError = (err: unknown, fallback: string) => {
-    if (err instanceof HttpError && (err.status === 401 || err.status === 403)) {
-      router.push(err.status === 401 ? "/" : "/problems");
-      return;
-    }
-    setError(errorMessage(err, fallback));
-  };
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const toggleAdmin = async (userId: string, currentRole: string) => {
-    const newRole = currentRole === "admin" ? "user" : "admin";
-    try {
-      await postJson("/api/admin/users", { userId, role: newRole }, { method: "PATCH" });
-    } catch (err) {
-      handleLoadError(err, "Could not change that user's role.");
-      return;
-    }
-    loadData();
-  };
+  const anyLive = (data?.live.length ?? 0) > 0;
 
-  if (status === "loading") {
+  useEffect(() => {
+    if (!auto) return;
+    const t = setInterval(load, anyLive ? REFRESH_LIVE_MS : REFRESH_IDLE_MS);
+    return () => clearInterval(t);
+  }, [auto, anyLive, load]);
+
+  // Only tick while something is actually counting down.
+  useTicker(anyLive);
+
+  if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        {error ? (
+          <div className="text-center">
+            <p className="text-red-400 mb-3 text-sm">{error}</p>
+            <button
+              onClick={load}
+              className="px-4 py-2 bg-gray-700 rounded-lg text-sm hover:bg-gray-600"
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-500" />
+        )}
       </div>
     );
   }
 
+  const { kpis } = data;
+  const serverTime = () => Date.now() - skewRef.current;
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">
-            Code<span className="text-green-500">Test</span>
-            <span className="text-sm text-purple-400 ml-2">Admin</span>
-          </h1>
+    <div>
+      <header className="border-b border-gray-700 px-6 py-4 flex items-center justify-between gap-4 flex-wrap sticky top-0 bg-gray-900 z-10">
+        <div>
+          <h1 className="text-xl font-bold">Overview</h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {loadedAt ? `Updated ${timeAgo(new Date(loadedAt))}` : "Loading…"}
+            {auto && ` · refreshing every ${anyLive ? REFRESH_LIVE_MS / 1000 : REFRESH_IDLE_MS / 1000}s`}
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer mr-2">
+            <input
+              type="checkbox"
+              checked={auto}
+              onChange={(e) => setAuto(e.target.checked)}
+              className="w-3.5 h-3.5 accent-green-600"
+            />
+            Auto-refresh
+          </label>
           <button
-            onClick={() => router.push("/admin/problems")}
-            className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium hover:bg-blue-700"
+            onClick={load}
+            disabled={refreshing}
+            className="px-3 py-1.5 bg-gray-700 rounded text-xs hover:bg-gray-600 disabled:opacity-50"
           >
-            Problem Bank
+            {refreshing ? "Refreshing…" : "Refresh"}
           </button>
-          <button
-            onClick={() => router.push("/admin/assessments")}
-            className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700"
+          <Link
+            href="/admin/assessments"
+            className="px-3 py-1.5 bg-green-600 rounded text-xs font-medium hover:bg-green-700"
           >
-            Tests &amp; candidate links
-          </button>
-          <button
-            onClick={() => router.push("/problems")}
-            className="px-4 py-2 bg-gray-700 rounded-lg text-sm hover:bg-gray-600"
-          >
-            ← Back to Problems
-          </button>
+            + New test
+          </Link>
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-700 px-6">
-        <div className="flex gap-6">
-          {(["attempts", "events", "users"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-                tab === t
-                  ? "border-green-500 text-green-400"
-                  : "border-transparent text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              {t === "attempts" ? "Test Results" : t === "events" ? "Proctor Events" : "Users"}
-            </button>
-          ))}
-        </div>
-      </div>
+      <main className="p-6 space-y-6">
+        {error && (
+          <p className="text-sm text-red-400 bg-red-950/40 border border-red-900 rounded px-3 py-2">
+            {error} — showing the last successful load.
+          </p>
+        )}
 
-      {/* Content */}
-      <main className="p-6">
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading...</div>
-        ) : error ? (
-          <div className="max-w-md mx-auto text-center py-12">
-            <p className="text-sm text-red-300 mb-4">{error}</p>
-            <button
-              onClick={loadData}
-              className="px-4 py-2 bg-gray-700 rounded text-sm hover:bg-gray-600"
-            >
-              Retry
-            </button>
-          </div>
-        ) : tab === "attempts" ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-400 border-b border-gray-700">
-                  <th className="pb-3 pr-4">User</th>
-                  <th className="pb-3 pr-4">Problem</th>
-                  <th className="pb-3 pr-4">Language</th>
-                  <th className="pb-3 pr-4">Score</th>
-                  <th className="pb-3 pr-4">Tests</th>
-                  <th className="pb-3 pr-4">State</th>
-                  <th className="pb-3">Submitted</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attempts.map((a) => (
-                  <tr key={a.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-2">
-                        {a.user.image && (
-                          <img src={a.user.image} alt="" className="w-6 h-6 rounded-full" />
+        {/* KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+          <StatTile
+            label="Taking a test now"
+            value={kpis.liveNow}
+            sub={kpis.liveNow > 0 ? `${kpis.onlineNow} responding` : "nobody in a test"}
+            accent={kpis.liveNow > 0 ? "blue" : undefined}
+            onClick={() => router.push("/admin/sessions?state=live")}
+          />
+          <StatTile
+            label="Flagged runs"
+            value={kpis.flaggedTotal}
+            sub={kpis.flaggedLive > 0 ? `${kpis.flaggedLive} of them live` : "with ≥1 warning"}
+            accent={kpis.flaggedTotal > 0 ? "red" : undefined}
+            onClick={() => router.push("/admin/sessions?flagged=1")}
+          />
+          <StatTile
+            label="Open tests"
+            value={kpis.openTests}
+            sub={`${kpis.totalTests} total`}
+            accent="green"
+            onClick={() => router.push("/admin/assessments")}
+          />
+          <StatTile
+            label="Completed runs"
+            value={kpis.completed}
+            sub={`${kpis.candidates} candidate${kpis.candidates === 1 ? "" : "s"}`}
+            onClick={() => router.push("/admin/sessions?state=finished")}
+          />
+          <StatTile
+            label="Average score"
+            value={kpis.avgScorePct === null ? "—" : `${kpis.avgScorePct}%`}
+            sub="finished runs"
+            accent={kpis.avgScorePct === null ? undefined : kpis.avgScorePct >= 60 ? "green" : "yellow"}
+          />
+          <StatTile
+            label="Today"
+            value={kpis.sessionsToday}
+            sub={`${kpis.submissionsToday} submission${kpis.submissionsToday === 1 ? "" : "s"}`}
+            onClick={() => router.push("/admin/submissions")}
+          />
+        </div>
+
+        {/* Live monitor */}
+        <Panel
+          title="Live now"
+          count={
+            anyLive
+              ? `${data.live.length} in a test · ${kpis.onlineNow} responding`
+              : undefined
+          }
+          action={
+            anyLive ? (
+              <span className="flex items-center gap-1.5 text-xs text-blue-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                live
+              </span>
+            ) : null
+          }
+        >
+          {!anyLive ? (
+            <Empty>
+              Nobody is taking a test right now. Share a test link and candidates appear here the
+              moment they start.
+            </Empty>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b border-gray-700 text-xs">
+                    <th className="py-2 pl-4 pr-3 font-medium">Candidate</th>
+                    <th className="py-2 pr-3 font-medium">Test</th>
+                    <th className="py-2 pr-3 font-medium w-40">Progress</th>
+                    <th className="py-2 pr-3 font-medium text-right">Score</th>
+                    <th className="py-2 pr-3 font-medium text-right">Time left</th>
+                    <th className="py-2 pr-3 font-medium text-center">⚠</th>
+                    <th className="py-2 pr-3 font-medium">Last seen</th>
+                    <th className="py-2 pr-4" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.live.map((r) => {
+                    const remaining = new Date(r.endsAt).getTime() - serverTime();
+                    const idle = serverTime() - new Date(r.lastSeenAt).getTime();
+                    const online = idle <= ONLINE_GRACE_MS;
+                    return (
+                      <tr
+                        key={r.sessionId}
+                        className="border-b border-gray-700/60 last:border-0 hover:bg-gray-900/40"
+                      >
+                        <td className="py-2.5 pl-4 pr-3">
+                          <div className="font-medium truncate max-w-[14rem]">
+                            {r.candidateName}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate max-w-[14rem]">
+                            {r.candidateEmail}
+                          </div>
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          <Link
+                            href={`/admin/assessments/${r.assessmentId}/leaderboard`}
+                            className="text-xs text-gray-300 hover:text-white truncate block max-w-[12rem]"
+                          >
+                            {r.assessmentTitle}
+                          </Link>
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          <div className="text-xs text-gray-400 mb-1">
+                            {r.solvedCount}/{r.questionCount} solved ·{" "}
+                            {r.submissionCount} submit{r.submissionCount === 1 ? "" : "s"}
+                          </div>
+                          <Bar value={r.solvedCount} max={r.questionCount} />
+                        </td>
+                        <td className="py-2.5 pr-3 text-right">
+                          <Score score={r.totalScore} max={r.maxScore} />
+                        </td>
+                        <td className="py-2.5 pr-3 text-right">
+                          <span
+                            className={`font-mono text-sm ${
+                              remaining <= ENDING_SOON_MS
+                                ? "text-red-400 font-semibold"
+                                : remaining <= HALFWAY_WARN_MS
+                                ? "text-yellow-400"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            {clock(remaining)}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-3 text-center">
+                          <WarningCount count={r.violationCount} max={r.maxViolations} />
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          {online ? (
+                            <span className="flex items-center gap-1.5 text-xs text-green-400">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              online
+                            </span>
+                          ) : (
+                            <span
+                              className="text-xs text-yellow-500"
+                              title={`Last heartbeat ${dateTime(r.lastSeenAt)}`}
+                            >
+                              idle {shortDuration(idle)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 pr-4 text-right">
+                          <Link
+                            href={`/admin/sessions/${r.sessionId}`}
+                            className="text-xs px-2.5 py-1 bg-purple-900/60 rounded hover:bg-purple-900 whitespace-nowrap"
+                          >
+                            Report
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+
+        {/* Every test */}
+        <Panel
+          title="Tests"
+          count={`${kpis.openTests} open · ${kpis.totalTests} total`}
+          action={
+            <Link href="/admin/assessments" className="text-xs text-gray-400 hover:text-white">
+              Manage →
+            </Link>
+          }
+        >
+          {data.tests.length === 0 ? (
+            <Empty>
+              No tests yet.{" "}
+              <Link href="/admin/assessments" className="text-green-400 hover:underline">
+                Create one
+              </Link>
+              , add questions, then share its link.
+            </Empty>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b border-gray-700 text-xs">
+                    <th className="py-2 pl-4 pr-3 font-medium">Test</th>
+                    <th className="py-2 pr-3 font-medium">Status</th>
+                    <th className="py-2 pr-3 font-medium">Shape</th>
+                    <th className="py-2 pr-3 font-medium text-right">Live</th>
+                    <th className="py-2 pr-3 font-medium text-right">Done</th>
+                    <th className="py-2 pr-3 font-medium text-right">Flagged</th>
+                    <th className="py-2 pr-3 font-medium text-right">Avg</th>
+                    <th className="py-2 pr-3 font-medium">Last start</th>
+                    <th className="py-2 pr-4" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.tests.map((t) => (
+                    <tr
+                      key={t.id}
+                      className="border-b border-gray-700/60 last:border-0 hover:bg-gray-900/40"
+                    >
+                      <td className="py-2.5 pl-4 pr-3">
+                        <Link
+                          href={`/admin/assessments/${t.id}`}
+                          className="font-medium hover:text-green-400 truncate block max-w-[16rem]"
+                        >
+                          {t.title}
+                        </Link>
+                        {t.questionCount === 0 && (
+                          <span className="text-[11px] text-yellow-500">
+                            no questions — link will not open
+                          </span>
                         )}
-                        <div>
-                          <div className="font-medium">{a.user.name}</div>
-                          <div className="text-xs text-gray-500">{a.user.email}</div>
+                      </td>
+                      <td className="py-2.5 pr-3">
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded ${
+                            t.isActive
+                              ? "bg-green-900 text-green-300"
+                              : "bg-gray-700 text-gray-400"
+                          }`}
+                        >
+                          {t.isActive ? "open" : "closed"}
+                        </span>
+                      </td>
+                      <td className="py-2.5 pr-3 text-xs text-gray-400 whitespace-nowrap">
+                        {t.questionCount}Q · {t.totalPoints} pts · {t.durationMinutes} min
+                      </td>
+                      <td className="py-2.5 pr-3 text-right font-mono text-xs">
+                        {t.inProgressCount > 0 ? (
+                          <span className="text-blue-400">{t.inProgressCount}</span>
+                        ) : (
+                          <span className="text-gray-600">0</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 pr-3 text-right font-mono text-xs">
+                        <span className="text-gray-300">{t.completedCount}</span>
+                        <span className="text-gray-600">/{t.startedCount}</span>
+                      </td>
+                      <td className="py-2.5 pr-3 text-right font-mono text-xs">
+                        <span className={t.flaggedCount > 0 ? "text-red-400" : "text-gray-600"}>
+                          {t.flaggedCount}
+                        </span>
+                      </td>
+                      <td className="py-2.5 pr-3 text-right font-mono text-xs">
+                        {t.avgScorePct === null ? (
+                          <span className="text-gray-600">—</span>
+                        ) : (
+                          <span className={scoreColor(t.avgScorePct)}>{t.avgScorePct}%</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 pr-3 text-xs text-gray-500 whitespace-nowrap">
+                        {t.lastStartedAt ? timeAgo(t.lastStartedAt) : "never"}
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        <div className="flex gap-2 justify-end">
+                          <CopyButton text={t.joinUrl} />
+                          <Link
+                            href={`/admin/assessments/${t.id}/leaderboard`}
+                            className="text-xs px-2.5 py-1 bg-purple-900/60 rounded hover:bg-purple-900 whitespace-nowrap"
+                          >
+                            Leaderboard
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+
+        {/* Feeds */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <Panel
+            title="Recently finished"
+            action={
+              <Link href="/admin/sessions" className="text-xs text-gray-400 hover:text-white">
+                All runs →
+              </Link>
+            }
+          >
+            {data.recent.length === 0 ? (
+              <Empty>No completed runs yet.</Empty>
+            ) : (
+              <div className="divide-y divide-gray-700/60">
+                {data.recent.map((r) => (
+                  <Link
+                    key={r.sessionId}
+                    href={`/admin/sessions/${r.sessionId}`}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-900/40"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate">{r.candidateName}</div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {r.assessmentTitle} · {clock(r.elapsedMs)} · {timeAgo(r.submittedAt)}
+                      </div>
+                    </div>
+                    {r.violationCount > 0 && (
+                      <span className="text-xs text-red-400 font-mono shrink-0">
+                        ⚠{r.violationCount}
+                      </span>
+                    )}
+                    <div className="shrink-0 text-right">
+                      <span className={`font-mono text-sm ${scoreColor(percent(r.totalScore, r.maxScore))}`}>
+                        {r.totalScore}
+                      </span>
+                      <span className="text-gray-600 font-mono text-xs">/{r.maxScore}</span>
+                    </div>
+                    <div className="shrink-0">
+                      <SessionStateBadge state={r.state} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          <Panel
+            title="Proctor log"
+            count={`${kpis.flaggedTotal} run${kpis.flaggedTotal === 1 ? "" : "s"} with warnings`}
+            action={
+              <Link href="/admin/events" className="text-xs text-gray-400 hover:text-white">
+                Full log →
+              </Link>
+            }
+          >
+            {data.events.length === 0 ? (
+              <Empty>Nothing recorded. No blocked actions, no warnings.</Empty>
+            ) : (
+              <div className="divide-y divide-gray-700/60">
+                {data.events.map((e) => {
+                  const body = (
+                    <>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded shrink-0 ${
+                          e.counted ? "bg-red-900 text-red-300" : "bg-gray-700 text-gray-300"
+                        }`}
+                      >
+                        {EVENT_LABELS[e.event] ?? e.event}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm truncate">{e.candidateName ?? "Unknown"}</div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {e.assessmentTitle ?? "Outside a test"}
+                          {e.detail ? ` · ${e.detail}` : ""}
                         </div>
                       </div>
-                    </td>
-                    <td className="py-3 pr-4">{a.problem.title}</td>
-                    <td className="py-3 pr-4">{languageShortName(a.languageId)}</td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`font-mono ${
-                          a.score === a.maxScore ? "text-green-400" : "text-yellow-400"
-                        }`}
-                      >
-                        {a.score}/{a.maxScore}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 text-xs">
-                      <span className="text-green-400">{a.runsSummary.passed}✓</span>{" "}
-                      <span className="text-red-400">{a.runsSummary.failed}✗</span>{" "}
-                      {a.runsSummary.pending > 0 && (
-                        <span className="text-gray-400">{a.runsSummary.pending}⏳</span>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded ${
-                          a.state === "done"
-                            ? "bg-green-900 text-green-300"
-                            : a.state === "error"
-                            ? "bg-red-900 text-red-300"
-                            : "bg-blue-900 text-blue-300"
-                        }`}
-                      >
-                        {a.state}
-                      </span>
-                    </td>
-                    <td className="py-3 text-xs text-gray-400">
-                      {new Date(a.createdAt).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {attempts.length === 0 && (
-              <p className="text-center py-12 text-gray-500">No submissions yet.</p>
+                      <span className="text-xs text-gray-600 shrink-0">{timeAgo(e.createdAt)}</span>
+                    </>
+                  );
+                  return e.sessionId ? (
+                    <Link
+                      key={e.id}
+                      href={`/admin/sessions/${e.sessionId}`}
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-900/40"
+                    >
+                      {body}
+                    </Link>
+                  ) : (
+                    <div key={e.id} className="flex items-center gap-3 px-4 py-2.5">
+                      {body}
+                    </div>
+                  );
+                })}
+              </div>
             )}
-          </div>
-        ) : tab === "events" ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-400 border-b border-gray-700">
-                  <th className="pb-3 pr-4">Time</th>
-                  <th className="pb-3 pr-4">User ID</th>
-                  <th className="pb-3 pr-4">Event</th>
-                  <th className="pb-3 pr-4">Detail</th>
-                  <th className="pb-3">Attempt ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((e) => (
-                  <tr key={e.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="py-3 pr-4 text-xs text-gray-400">
-                      {new Date(e.createdAt).toLocaleString()}
-                    </td>
-                    <td className="py-3 pr-4 font-mono text-xs">{e.userId.slice(0, 8)}...</td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded ${
-                          e.event === "tab_switch" || e.event === "window_blur"
-                            ? "bg-yellow-900 text-yellow-300"
-                            : e.event === "copy" || e.event === "paste"
-                            ? "bg-red-900 text-red-300"
-                            : "bg-orange-900 text-orange-300"
-                        }`}
-                      >
-                        {e.event}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 text-xs text-gray-400">{e.detail || "—"}</td>
-                    <td className="py-3 font-mono text-xs text-gray-500">
-                      {e.attemptId ? `${e.attemptId.slice(0, 8)}...` : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {events.length === 0 && (
-              <p className="text-center py-12 text-gray-500">No proctor events recorded.</p>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-400 border-b border-gray-700">
-                  <th className="pb-3 pr-4">User</th>
-                  <th className="pb-3 pr-4">Email</th>
-                  <th className="pb-3 pr-4">Role</th>
-                  <th className="pb-3 pr-4">Attempts</th>
-                  <th className="pb-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-2">
-                        {u.image && <img src={u.image} alt="" className="w-6 h-6 rounded-full" />}
-                        <span>{u.name || "—"}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4 text-gray-400">{u.email}</td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded ${
-                          u.role === "admin" ? "bg-purple-900 text-purple-300" : "bg-gray-700 text-gray-300"
-                        }`}
-                      >
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">{u._count.attempts}</td>
-                    <td className="py-3">
-                      <button
-                        onClick={() => toggleAdmin(u.id, u.role)}
-                        className="text-xs px-3 py-1 rounded bg-gray-700 hover:bg-gray-600"
-                      >
-                        {u.role === "admin" ? "Remove Admin" : "Make Admin"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          </Panel>
+        </div>
+
+        <p className="text-xs text-gray-600">
+          Live scores are running totals recomputed from each candidate&apos;s best submission per
+          question — the same rule the leaderboard settles on, so a position here never moves just
+          because the run ended. Time left counts against the server&apos;s clock, not this
+          browser&apos;s.
+        </p>
       </main>
     </div>
   );

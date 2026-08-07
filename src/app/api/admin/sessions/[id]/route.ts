@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
-import { computeSessionScore, loadSessionProblems, sweepExpiredSessions } from "@/lib/assessment";
+import {
+  computeSessionScore,
+  loadSessionProblems,
+  sessionElapsedMs,
+  sweepExpiredSessions,
+} from "@/lib/assessment";
 import { BURST_CHARS } from "@/lib/proctor-config";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -117,12 +122,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     endsAt: session.endsAt,
     submittedAt: session.submittedAt,
     durationMinutes: session.assessment.durationMinutes,
-    // Capped at the deadline: a candidate who walked away cannot have used more
-    // time than the test allowed, however long it took for anyone to notice.
-    elapsedMs: Math.max(
-      0,
-      Math.min((session.submittedAt ?? new Date()).getTime(), session.endsAt.getTime()) - startMs
-    ),
+    elapsedMs: sessionElapsedMs(session),
     violationCount: session.violationCount,
     maxViolations: session.assessment.maxViolations,
     totalScore,
@@ -136,6 +136,40 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       atMs: e.createdAt.getTime() - startMs,
       createdAt: e.createdAt,
     })),
+  });
+}
+
+/**
+ * Clear a candidate's run so they can take the test again.
+ *
+ * One run per account is enforced by the unique (assessmentId, userId) index, so
+ * removing the row is the only thing that reopens the link for them. Everything
+ * hanging off it goes too — submissions, proctor log, drafts, typing metrics and
+ * the frozen question set all cascade — which is why this is destructive rather
+ * than a state change: a retake that kept the old attempts would score against
+ * work from the first sitting.
+ */
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const guard = await requireAdmin();
+  if (guard.error) return guard.error;
+
+  const existing = await prisma.testSession.findUnique({
+    where: { id: params.id },
+    select: { id: true, candidateEmail: true, assessmentId: true },
+  });
+
+  // Prisma turns a delete against a missing row into a throw, which would read
+  // as a server fault rather than the stale list it usually is.
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  await prisma.testSession.delete({ where: { id: params.id } });
+
+  return NextResponse.json({
+    ok: true,
+    assessmentId: existing.assessmentId,
+    candidateEmail: existing.candidateEmail,
   });
 }
 

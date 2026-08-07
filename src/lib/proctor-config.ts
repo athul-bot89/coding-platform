@@ -61,6 +61,13 @@ export const BURST_CHARS = 40;
 /** Heartbeat cadence — also how often the client re-syncs the clock. */
 export const HEARTBEAT_MS = 10_000;
 
+/**
+ * How long a live session stays "online" on the admin monitor after its last
+ * heartbeat. Three missed beats — wide enough to ride out one slow request
+ * without the row flickering, tight enough that a closed laptop shows up fast.
+ */
+export const ONLINE_GRACE_MS = HEARTBEAT_MS * 3;
+
 /** Debounce before an edited draft is persisted. */
 export const DRAFT_SAVE_MS = 2_000;
 

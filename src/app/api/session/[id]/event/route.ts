@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!counted) {
     return NextResponse.json({
       violationCount: session.violationCount,
-      maxViolations: session.invitation.assessment.maxViolations,
+      maxViolations: session.assessment.maxViolations,
       counted: false,
       terminated: false,
     });
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     data: { violationCount: { increment: 1 } },
   });
 
-  const max = session.invitation.assessment.maxViolations;
+  const max = session.assessment.maxViolations;
   const terminated = max > 0 && updated.violationCount >= max;
 
   if (terminated) {

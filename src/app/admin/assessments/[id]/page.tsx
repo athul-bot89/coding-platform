@@ -14,32 +14,12 @@ interface Detail {
   durationMinutes: number;
   maxViolations: number;
   isActive: boolean;
+  joinUrl: string;
   problems: { problemId: string; ordinal: number; points: number; title: string; difficulty: string }[];
   availableProblems: { id: string; title: string; slug: string; difficulty: string }[];
-  invitations: {
-    id: string;
-    candidateName: string;
-    candidateEmail: string;
-    status: string;
-    expiresAt: string;
-    url: string;
-    sessionId: string | null;
-    sessionState: string | null;
-    score: number | null;
-    maxScore: number | null;
-    violationCount: number | null;
-  }[];
-}
-
-interface GenerateResult {
-  invitations: { id: string; candidateName: string; candidateEmail: string; url: string }[];
-  /**
-   * Addresses the server declined to invite a second time. One candidate gets
-   * one link per test, so pasted duplicates and anyone already invited come
-   * back here instead of becoming a second scored run. Older builds of the
-   * endpoint omit the field entirely.
-   */
-  skipped?: { email: string; reason: string }[];
+  startedCount: number;
+  inProgressCount: number;
+  completedCount: number;
 }
 
 export default function AssessmentDetailPage() {
@@ -58,11 +38,8 @@ export default function AssessmentDetailPage() {
     maxViolations: DEFAULT_MAX_VIOLATIONS,
     instructions: "",
   });
-  const [candidateText, setCandidateText] = useState("");
-  const [validDays, setValidDays] = useState(7);
-  const [inviting, setInviting] = useState(false);
-  const [skipped, setSkipped] = useState<{ email: string; reason: string }[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
+  const [rotating, setRotating] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
@@ -94,7 +71,6 @@ export default function AssessmentDetailPage() {
         ...body,
         problems,
         availableProblems: Array.isArray(body.availableProblems) ? body.availableProblems : [],
-        invitations: Array.isArray(body.invitations) ? body.invitations : [],
       });
       setPicked(problems.map((p) => ({ problemId: p.problemId, points: p.points })));
       setSettings({
@@ -168,69 +144,25 @@ export default function AssessmentDetailPage() {
     });
   };
 
-  const generate = async () => {
-    setInviting(true);
-    setError(null);
-    setSkipped([]);
-
-    // One candidate per line: "Name <email>", "Name, email", or just an email.
-    const candidates = candidateText
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const angled = line.match(/^(.*?)\s*<([^>]+)>$/);
-        if (angled) return { name: angled[1].trim(), email: angled[2].trim() };
-        const parts = line.split(/[,;\t]/).map((s) => s.trim());
-        if (parts.length >= 2) return { name: parts[0], email: parts[1] };
-        return { name: "", email: line };
-      });
-
-    if (candidates.length === 0) {
-      setError("Add at least one candidate.");
-      setInviting(false);
+  const rotateLink = async () => {
+    if (
+      !confirm(
+        "Issue a new link?\n\nEvery copy of the current link stops working immediately. Candidates already taking the test are unaffected."
+      )
+    ) {
       return;
     }
-
+    setRotating(true);
+    setError(null);
     try {
-      const body = await postJson<GenerateResult>(`/api/admin/assessments/${id}/invitations`, {
-        candidates,
-        validDays,
-      });
-
-      const created = Array.isArray(body.invitations) ? body.invitations : [];
-      const notInvited = Array.isArray(body.skipped) ? body.skipped : [];
-      setSkipped(notInvited);
-
-      // Keep the pasted list when nothing was created, so the admin can correct
-      // it instead of retyping addresses that all turned out to be skipped.
-      if (created.length > 0) setCandidateText("");
-
-      flash(
-        created.length === 0
-          ? "No new links — every address was skipped"
-          : `${created.length} link(s) generated${
-              notInvited.length > 0 ? ` · ${notInvited.length} skipped` : ""
-            }`
-      );
-      load();
+      await postJson(`/api/admin/assessments/${id}/link`, {});
     } catch (err) {
-      reportError(err, "Could not generate links.");
+      reportError(err, "Could not issue a new link.");
+      return;
     } finally {
-      setInviting(false);
+      setRotating(false);
     }
-  };
-
-  const revoke = async (invitationId: string) => {
-    setError(null);
-    try {
-      await fetchJson(`/api/admin/assessments/${id}/invitations?invitationId=${invitationId}`, {
-        method: "DELETE",
-      });
-    } catch (err) {
-      reportError(err, "Could not revoke that link.");
-      return;
-    }
+    flash("New link issued");
     load();
   };
 
@@ -275,6 +207,15 @@ export default function AssessmentDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           {notice && <span className="text-sm text-green-400">{notice}</span>}
+          <button
+            onClick={() => router.push(`/admin/assessments/${id}/leaderboard`)}
+            className="px-4 py-2 bg-purple-900/60 rounded-lg text-sm font-medium hover:bg-purple-900"
+          >
+            🏆 Leaderboard
+            {data.startedCount > 0 && (
+              <span className="ml-2 text-xs text-purple-300">{data.startedCount}</span>
+            )}
+          </button>
           <button
             onClick={save}
             disabled={saving}
@@ -463,198 +404,74 @@ export default function AssessmentDetailPage() {
           </div>
         </section>
 
-        {/* Invitations */}
+        {/* Shared link */}
         <section className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-          <h2 className="font-semibold mb-1">Candidate links</h2>
+          <h2 className="font-semibold mb-1">Test link</h2>
           <p className="text-xs text-gray-500 mb-4">
-            Each link works once, for one Google account, and each candidate gets a single link per
-            test. Copy it into your own email — nothing is sent from here.
+            One link for everyone. Send it however you like — nothing is emailed from here. Anyone
+            who opens it signs in with Google and gets a single attempt; the account they use is
+            the name that appears on the leaderboard.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-            <label className="md:col-span-3 block">
-              <span className="text-xs text-gray-400 block mb-1">
-                One candidate per line — <code className="text-gray-500">Name &lt;email&gt;</code>,{" "}
-                <code className="text-gray-500">Name, email</code>, or just an email
-              </span>
-              <span className="text-xs text-gray-600 block mb-1">
-                One link per candidate: repeated addresses, and anyone who already has a link for
-                this test, are skipped and listed below.
-              </span>
-              <textarea
-                rows={3}
-                value={candidateText}
-                onChange={(e) => setCandidateText(e.target.value)}
-                placeholder={"Asha Menon <asha@example.com>\nrahul@example.com"}
-                className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm font-mono"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs text-gray-400 block mb-1">Link valid (days)</span>
-              <input
-                type="number"
-                min={1}
-                max={365}
-                value={validDays}
-                onChange={(e) => setValidDays(Number(e.target.value))}
-                className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm"
-              />
-              <button
-                onClick={generate}
-                disabled={inviting || picked.length === 0}
-                className="w-full mt-2 px-4 py-2 bg-green-600 rounded text-sm font-medium hover:bg-green-700 disabled:opacity-40"
-              >
-                {inviting ? "Generating…" : "Generate links"}
-              </button>
-            </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="flex-1 min-w-[16rem] bg-gray-900 border border-gray-700 rounded px-3 py-2.5 text-sm text-green-400 break-all">
+              {data.joinUrl}
+            </code>
+            <button
+              onClick={() => copy(data.joinUrl, "join")}
+              className="px-4 py-2.5 bg-green-600 rounded text-sm font-medium hover:bg-green-700"
+            >
+              {copied === "join" ? "Copied!" : "Copy link"}
+            </button>
+            <button
+              onClick={rotateLink}
+              disabled={rotating}
+              className="px-3 py-2.5 bg-gray-700 rounded text-sm hover:bg-gray-600 disabled:opacity-50"
+              title="Issue a new link and kill the current one"
+            >
+              {rotating ? "Working…" : "New link"}
+            </button>
           </div>
 
           {picked.length === 0 && (
-            <p className="text-xs text-yellow-400 mb-4">
-              Add and save at least one question before generating links.
+            <p className="text-xs text-yellow-400 mt-3">
+              This link will not open until you add and save at least one question.
+            </p>
+          )}
+          {!data.isActive && picked.length > 0 && (
+            <p className="text-xs text-yellow-400 mt-3">
+              The test is closed, so this link turns anyone new away. Open it in Settings above when
+              you are ready.
             </p>
           )}
 
-          {skipped.length > 0 && (
-            <div className="mb-4 rounded border border-yellow-900 bg-yellow-950/30 px-3 py-2">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-xs text-yellow-300 font-medium">
-                  {skipped.length} address{skipped.length === 1 ? "" : "es"} skipped — no new link
-                  was created. Any link {skipped.length === 1 ? "it" : "they"} already{" "}
-                  {skipped.length === 1 ? "has" : "have"} still works and is listed below.
-                </p>
-                <button
-                  onClick={() => setSkipped([])}
-                  className="text-xs text-yellow-600 hover:text-yellow-400 shrink-0"
-                >
-                  Dismiss
-                </button>
-              </div>
-              <ul className="mt-1.5 space-y-1">
-                {skipped.map((s) => (
-                  <li key={s.email} className="text-xs">
-                    <span className="font-mono text-yellow-200">{s.email}</span>
-                    <span className="text-yellow-200/60"> — {s.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <p className="text-xs text-gray-600 mt-3">
+            The link is unguessable, but it is not tied to anyone — whoever holds it can take the
+            test. <strong>New link</strong> invalidates every copy of the current one at once, and
+            leaves candidates already working untouched.
+          </p>
 
-          {data.invitations.length > 0 && (
-            <>
-              <div className="flex justify-end mb-2">
-                <button
-                  onClick={() =>
-                    copy(
-                      data.invitations
-                        .filter((i) => i.status === "pending")
-                        .map((i) => `${i.candidateName} <${i.candidateEmail}>: ${i.url}`)
-                        .join("\n"),
-                      "all"
-                    )
-                  }
-                  className="text-xs px-3 py-1.5 bg-gray-700 rounded hover:bg-gray-600"
-                >
-                  {copied === "all" ? "Copied!" : "Copy all unused links"}
-                </button>
+          <div className="grid grid-cols-3 gap-3 mt-5">
+            {[
+              ["Started", data.startedCount],
+              ["In progress", data.inProgressCount],
+              ["Completed", data.completedCount],
+            ].map(([label, value]) => (
+              <div key={String(label)} className="bg-gray-900 rounded-lg p-3 text-center">
+                <div className="text-lg font-semibold">{value}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{label}</div>
               </div>
+            ))}
+          </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-gray-400 border-b border-gray-700">
-                      <th className="pb-2 pr-3">Candidate</th>
-                      <th className="pb-2 pr-3">Status</th>
-                      <th className="pb-2 pr-3">Score</th>
-                      <th className="pb-2 pr-3">Warnings</th>
-                      <th className="pb-2">Link</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.invitations.map((inv) => (
-                      <tr key={inv.id} className="border-b border-gray-800">
-                        <td className="py-2.5 pr-3">
-                          <div>{inv.candidateName}</div>
-                          <div className="text-xs text-gray-500">{inv.candidateEmail}</div>
-                        </td>
-                        <td className="py-2.5 pr-3">
-                          <StatusBadge status={inv.sessionState ?? inv.status} />
-                        </td>
-                        <td className="py-2.5 pr-3 font-mono text-xs">
-                          {inv.score != null ? `${inv.score}/${inv.maxScore}` : "—"}
-                        </td>
-                        <td className="py-2.5 pr-3 text-xs">
-                          {inv.violationCount != null ? (
-                            <span className={inv.violationCount > 0 ? "text-red-400" : "text-gray-500"}>
-                              {inv.violationCount}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td className="py-2.5">
-                          <div className="flex items-center gap-2">
-                            {inv.sessionId ? (
-                              <button
-                                onClick={() => router.push(`/admin/sessions/${inv.sessionId}`)}
-                                className="text-xs px-3 py-1 bg-purple-900/60 rounded hover:bg-purple-900"
-                              >
-                                View report
-                              </button>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => copy(inv.url, inv.id)}
-                                  className="text-xs px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
-                                >
-                                  {copied === inv.id ? "Copied!" : "Copy link"}
-                                </button>
-                                <button
-                                  onClick={() => revoke(inv.id)}
-                                  className="text-xs px-2 py-1 text-gray-500 hover:text-red-400"
-                                >
-                                  Revoke
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+          <button
+            onClick={() => router.push(`/admin/assessments/${id}/leaderboard`)}
+            className="w-full mt-3 px-4 py-2 bg-gray-700 rounded text-sm hover:bg-gray-600"
+          >
+            View leaderboard and reports →
+          </button>
         </section>
       </main>
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    pending: "bg-gray-700 text-gray-300",
-    started: "bg-blue-900 text-blue-300",
-    in_progress: "bg-blue-900 text-blue-300",
-    submitted: "bg-green-900 text-green-300",
-    auto_submitted: "bg-yellow-900 text-yellow-300",
-    terminated: "bg-red-900 text-red-300",
-    expired: "bg-gray-800 text-gray-500",
-  };
-  const labels: Record<string, string> = {
-    pending: "not started",
-    started: "in progress",
-    in_progress: "in progress",
-    submitted: "submitted",
-    auto_submitted: "time expired",
-    terminated: "terminated",
-    expired: "link expired",
-  };
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded ${styles[status] ?? styles.pending}`}>
-      {labels[status] ?? status}
-    </span>
   );
 }

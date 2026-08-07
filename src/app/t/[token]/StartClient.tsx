@@ -8,10 +8,8 @@ import { requestFullscreen } from "@/components/ProctorGuard";
 
 interface Props {
   token: string;
-  candidateName: string;
-  candidateEmail: string;
   signedInEmail: string | null;
-  matched: boolean;
+  signedInName: string | null;
   resuming: boolean;
   assessment: {
     title: string;
@@ -24,14 +22,15 @@ interface Props {
   };
 }
 
-export function InviteClient(props: Props) {
+export function StartClient(props: Props) {
   const { assessment } = props;
   const router = useRouter();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
 
-  const inviteUrl = `/invite/${props.token}`;
+  const testUrl = `/t/${props.token}`;
+  const displayName = props.signedInName?.trim() || props.signedInEmail || "you";
 
   const handleStart = async () => {
     if (starting) return;
@@ -58,7 +57,7 @@ export function InviteClient(props: Props) {
     }
 
     try {
-      const res = await fetch(`/api/invites/${props.token}/start`, { method: "POST" });
+      const res = await fetch(`/api/tests/${props.token}/start`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Could not start the test.");
@@ -97,16 +96,13 @@ export function InviteClient(props: Props) {
       <Card>
         <p className="text-xs uppercase tracking-wider text-green-500 mb-2">Coding assessment</p>
         <h1 className="text-2xl font-bold">{assessment.title}</h1>
-        <p className="text-sm text-gray-400 mt-1">Invitation for {props.candidateName}</p>
         <Summary />
-        <p className="text-sm text-gray-400 mb-4">
-          Sign in with the Google account this invitation was sent to:
-        </p>
-        <p className="font-mono text-sm bg-gray-900 rounded px-3 py-2 mb-5 text-green-400 break-all">
-          {props.candidateEmail}
+        <p className="text-sm text-gray-400 mb-5">
+          Sign in with your Google account to begin. The account you use identifies you on the
+          results — you get <strong>one attempt</strong> per account.
         </p>
         <button
-          onClick={() => signIn("google", { callbackUrl: inviteUrl })}
+          onClick={() => signIn("google", { callbackUrl: testUrl })}
           className="w-full inline-flex items-center justify-center gap-3 bg-white text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -124,36 +120,7 @@ export function InviteClient(props: Props) {
     );
   }
 
-  // ---- Signed in as the wrong person ---------------------------------------
-  if (!props.matched) {
-    return (
-      <Card>
-        <div className="text-4xl mb-4 text-center">⚠️</div>
-        <h1 className="text-xl font-semibold text-center mb-4">Wrong Google account</h1>
-        <div className="space-y-3 text-sm">
-          <div className="bg-gray-900 rounded-lg p-3">
-            <div className="text-xs text-gray-500 mb-1">You are signed in as</div>
-            <div className="font-mono text-red-400 break-all">{props.signedInEmail}</div>
-          </div>
-          <div className="bg-gray-900 rounded-lg p-3">
-            <div className="text-xs text-gray-500 mb-1">This invitation is for</div>
-            <div className="font-mono text-green-400 break-all">{props.candidateEmail}</div>
-          </div>
-        </div>
-        <p className="text-sm text-gray-400 mt-5 mb-5">
-          Sign out and sign back in with the invited account to continue.
-        </p>
-        <button
-          onClick={() => signOut({ callbackUrl: inviteUrl })}
-          className="w-full px-6 py-3 bg-gray-700 rounded-lg font-medium hover:bg-gray-600 transition-colors"
-        >
-          Sign out and switch account
-        </button>
-      </Card>
-    );
-  }
-
-  // ---- Matched: rules screen ----------------------------------------------
+  // ---- Signed in: rules screen ---------------------------------------------
   return (
     <Card>
       <p className="text-xs uppercase tracking-wider text-green-500 mb-2">
@@ -161,7 +128,8 @@ export function InviteClient(props: Props) {
       </p>
       <h1 className="text-2xl font-bold">{assessment.title}</h1>
       <p className="text-sm text-gray-400 mt-1">
-        {props.candidateName} · {props.candidateEmail}
+        {props.signedInName ? `${props.signedInName} · ` : ""}
+        {props.signedInEmail}
       </p>
 
       <Summary />
@@ -205,6 +173,12 @@ export function InviteClient(props: Props) {
           </li>
           <li>• The timer runs on our servers. Closing the tab does <strong>not</strong> pause it.</li>
           <li>• Typing patterns are recorded to detect pasted code.</li>
+          {!props.resuming && (
+            <li>
+              • You get <strong>one attempt</strong>. Once you start, this link will not give you a
+              second one.
+            </li>
+          )}
         </ul>
       </div>
 
@@ -223,8 +197,8 @@ export function InviteClient(props: Props) {
           className="mt-0.5 w-4 h-4 accent-green-600"
         />
         <span className="text-xs text-gray-400">
-          I understand the rules above and confirm I am {props.candidateName}, completing this test
-          without assistance.
+          I understand the rules above and confirm I am {displayName}, completing this test without
+          assistance.
         </span>
       </label>
 
@@ -244,6 +218,19 @@ export function InviteClient(props: Props) {
           ? "Your clock is already running."
           : `Your ${assessment.durationMinutes}-minute clock starts the moment you press this.`}
       </p>
+
+      {/* Shared links get opened on whatever account the browser happens to be
+          holding, so switching is a first-class action here rather than an
+          error state. Offered before Start, since afterwards the run is bound
+          to this account for good. */}
+      {!props.resuming && (
+        <button
+          onClick={() => signOut({ callbackUrl: testUrl })}
+          className="w-full mt-3 text-xs text-gray-500 hover:text-gray-300"
+        >
+          Not {displayName}? Sign in with a different account
+        </button>
+      )}
     </Card>
   );
 }

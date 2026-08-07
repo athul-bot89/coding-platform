@@ -32,6 +32,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     evicted: false,
     remainingMs: remainingMs(session.endsAt),
     violationCount: session.violationCount,
-    maxViolations: session.invitation.assessment.maxViolations,
+    maxViolations: session.assessment.maxViolations,
   });
 }

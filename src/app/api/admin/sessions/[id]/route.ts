@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     where: { id: params.id },
     include: {
       user: { select: { name: true, email: true, image: true } },
-      invitation: { include: { assessment: true } },
+      assessment: true,
       events: { orderBy: { createdAt: "asc" } },
       metrics: true,
       attempts: {
@@ -102,10 +102,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   return NextResponse.json({
     id: session.id,
-    assessmentTitle: session.invitation.assessment.title,
-    assessmentId: session.invitation.assessmentId,
-    candidateName: session.invitation.candidateName,
-    invitedEmail: session.invitation.candidateEmail,
+    assessmentTitle: session.assessment.title,
+    assessmentId: session.assessmentId,
+    // Captured at start. `signedInAs` reads the account row as it stands now, so
+    // the two differ when the candidate has since renamed or changed the address
+    // on their Google account — the report shows who actually sat the test.
+    candidateName: session.candidateName,
+    candidateEmail: session.candidateEmail,
     signedInAs: session.user.email,
     signedInName: session.user.name,
     image: session.user.image,
@@ -113,7 +116,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     startedAt: session.startedAt,
     endsAt: session.endsAt,
     submittedAt: session.submittedAt,
-    durationMinutes: session.invitation.assessment.durationMinutes,
+    durationMinutes: session.assessment.durationMinutes,
     // Capped at the deadline: a candidate who walked away cannot have used more
     // time than the test allowed, however long it took for anyone to notice.
     elapsedMs: Math.max(
@@ -121,7 +124,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       Math.min((session.submittedAt ?? new Date()).getTime(), session.endsAt.getTime()) - startMs
     ),
     violationCount: session.violationCount,
-    maxViolations: session.invitation.assessment.maxViolations,
+    maxViolations: session.assessment.maxViolations,
     totalScore,
     maxScore,
     questions,

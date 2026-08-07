@@ -25,7 +25,7 @@ export async function requireLiveSession(sessionId: string) {
 
   const testSession = await prisma.testSession.findUnique({
     where: { id: sessionId },
-    include: { invitation: { include: { assessment: true } } },
+    include: { assessment: true },
   });
 
   if (!testSession) {

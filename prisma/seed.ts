@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -94,8 +95,8 @@ Buzz
     },
   });
 
-  // A ready-to-use proctored test so the invite flow can be exercised
-  // immediately. Add candidates from /admin/assessments to generate links.
+  // A ready-to-use proctored test so the shared-link flow can be exercised
+  // immediately. Its link is printed below.
   const existing = await prisma.assessment.findFirst({
     where: { title: "Sample Screening Test" },
   });
@@ -111,6 +112,7 @@ Buzz
         // Mirrors DEFAULT_MAX_VIOLATIONS in src/lib/proctor-config.ts — inlined
         // because the seed runs under bare ts-node, which does not resolve "@/".
         maxViolations: 5,
+        joinToken: randomBytes(16).toString("hex"),
       },
     }));
 
@@ -125,6 +127,12 @@ Buzz
   console.log("Seed completed!");
   console.log("Problems created:", problem.title, problem2.title);
   console.log(`Assessment ready: "${assessment.title}" (${assessment.durationMinutes} min)`);
+  console.log(
+    `Shared test link: ${(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").replace(
+      /\/$/,
+      ""
+    )}/t/${assessment.joinToken}`
+  );
   console.log("Next: sign in, set your User.role to 'admin', then open /admin/assessments");
 }
 

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (guard.error) return guard.error;
   const { session, problems: served } = guard;
 
-  const assessment = session.invitation.assessment;
+  const assessment = session.assessment;
 
   // Loading the test screen claims tab ownership. Any older tab still open will
   // find out it has been evicted on its next heartbeat.
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({
     id: session.id,
     title: assessment.title,
-    candidateName: session.invitation.candidateName,
+    candidateName: session.candidateName,
     remainingMs: remainingMs(session.endsAt),
     endsAt: session.endsAt,
     serverNow: Date.now(),

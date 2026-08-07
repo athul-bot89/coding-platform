@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const guard = await requireAdmin();
   if (guard.error) return guard.error;
 
-  const { skip, take, page } = paginationParams(req.nextUrl.searchParams, {
+  const { skip, limit, page } = paginationParams(req.nextUrl.searchParams, {
     defaultLimit: 50,
   });
 
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     prisma.problem.findMany({
       orderBy: { createdAt: "desc" },
       skip,
-      take,
+      take: limit,
       include: {
         _count: { select: { testCases: true, attempts: true } },
         testCases: {
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
       maxScore: p.testCases.reduce((s, t) => s + t.weight, 0),
     })),
     page,
-    totalPages: Math.ceil(total / take),
+    totalPages: Math.ceil(total / limit),
     total,
   });
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
-import { sweepExpiredSessions, sweepExpiredInvitations } from "@/lib/assessment";
+import { generateJoinToken, testUrl, sweepExpiredSessions } from "@/lib/assessment";
 
 export async function GET() {
   const guard = await requireAdmin();
@@ -9,13 +9,12 @@ export async function GET() {
 
   // No cron in this deployment — reads are where abandoned tests get finalized.
   await sweepExpiredSessions();
-  await sweepExpiredInvitations();
 
   const assessments = await prisma.assessment.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       problems: true,
-      invitations: { include: { session: { select: { state: true } } } },
+      sessions: { select: { state: true } },
     },
   });
 
@@ -29,10 +28,9 @@ export async function GET() {
       createdAt: a.createdAt,
       questionCount: a.problems.length,
       totalPoints: a.problems.reduce((s, p) => s + p.points, 0),
-      invitedCount: a.invitations.length,
-      completedCount: a.invitations.filter(
-        (i) => i.session && i.session.state !== "in_progress"
-      ).length,
+      joinUrl: testUrl(a.joinToken),
+      startedCount: a.sessions.length,
+      completedCount: a.sessions.filter((s) => s.state !== "in_progress").length,
     }))
   );
 }
@@ -66,14 +64,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Max violations must be 0–50" }, { status: 400 });
   }
 
+  // The shared link exists from the moment the test does — there is no separate
+  // "publish" step to mint it, and nothing downstream has to cope with a test
+  // that has no way in.
   const assessment = await prisma.assessment.create({
     data: {
       title: title.trim(),
       instructions: instructions?.trim() || null,
       durationMinutes: Math.floor(duration),
       maxViolations: Math.floor(violations),
+      joinToken: generateJoinToken(),
     },
   });
 
-  return NextResponse.json({ id: assessment.id });
+  return NextResponse.json({ id: assessment.id, joinUrl: testUrl(assessment.joinToken) });
 }

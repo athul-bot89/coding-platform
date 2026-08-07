@@ -1,8 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { emailsMatch } from "@/lib/assessment";
-import { InviteClient } from "./InviteClient";
+import { StartClient } from "./StartClient";
 
 export const dynamic = "force-dynamic";
 
@@ -29,29 +28,34 @@ function DeadLink({ title, message }: { title: string; message: string }) {
   );
 }
 
-export default async function InvitePage({ params }: { params: { token: string } }) {
-  const invitation = await prisma.invitation.findUnique({
-    where: { token: params.token },
-    include: {
-      assessment: {
-        include: { problems: { include: { problem: true }, orderBy: { ordinal: "asc" } } },
-      },
-      session: true,
-    },
+export default async function TestLinkPage({ params }: { params: { token: string } }) {
+  const assessment = await prisma.assessment.findUnique({
+    where: { joinToken: params.token },
+    include: { problems: { include: { problem: true }, orderBy: { ordinal: "asc" } } },
   });
 
-  if (!invitation) {
+  if (!assessment) {
     return (
       <DeadLink
-        title="Invalid invite link"
-        message="This link doesn't match any test invitation. Check that you copied the whole URL."
+        title="Invalid test link"
+        message="This link doesn't match any test. Check that you copied the whole URL."
       />
     );
   }
 
-  const { assessment } = invitation;
+  const auth = await getServerSession(authOptions);
+  const signedInEmail = auth?.user?.email ?? null;
+  const userId = (auth?.user as any)?.id as string | undefined;
 
-  if (invitation.session && invitation.session.state !== "in_progress") {
+  // Only a signed-in visitor can have a session, so this is the one place the
+  // page needs the account before it can decide what to show.
+  const mine = userId
+    ? await prisma.testSession.findUnique({
+        where: { assessmentId_userId: { assessmentId: assessment.id, userId } },
+      })
+    : null;
+
+  if (mine && mine.state !== "in_progress") {
     return (
       <DeadLink
         title="Test already completed"
@@ -61,7 +65,7 @@ export default async function InvitePage({ params }: { params: { token: string }
   }
 
   // An in-progress session whose clock ran out is finished, whatever the row says.
-  if (invitation.session && invitation.session.endsAt.getTime() <= Date.now()) {
+  if (mine && mine.endsAt.getTime() <= Date.now()) {
     return (
       <DeadLink
         title="Time expired"
@@ -70,22 +74,12 @@ export default async function InvitePage({ params }: { params: { token: string }
     );
   }
 
-  if (!invitation.session && invitation.expiresAt.getTime() < Date.now()) {
-    return (
-      <DeadLink
-        title="Invite link expired"
-        message={`This link was valid until ${invitation.expiresAt.toLocaleDateString()}. Ask the hiring team for a new one.`}
-      />
-    );
-  }
-
   // Both of these are reasons not to *begin* a test, so they only apply when
-  // there is no session yet — the start endpoint returns a live session before it
-  // looks at either. A candidate whose clock is already running must not be
-  // locked out of it because the organiser closed the assessment or emptied its
+  // there is no session yet. A candidate whose clock is already running must not
+  // be locked out of it because the organiser closed the test or emptied its
   // question list while they were working; their session carries its own frozen
   // copy of the questions, so it is still playable.
-  if (!invitation.session) {
+  if (!mine) {
     if (!assessment.isActive) {
       return (
         <DeadLink title="Test unavailable" message="This test has been closed by the organiser." />
@@ -102,23 +96,17 @@ export default async function InvitePage({ params }: { params: { token: string }
     }
   }
 
-  const session = await getServerSession(authOptions);
-  const signedInEmail = session?.user?.email ?? null;
-  const matched = emailsMatch(signedInEmail, invitation.candidateEmail);
-
   return (
     <Shell>
-      <InviteClient
+      <StartClient
         token={params.token}
-        candidateName={invitation.candidateName}
-        candidateEmail={invitation.candidateEmail}
         signedInEmail={signedInEmail}
-        matched={matched}
-        resuming={!!invitation.session}
-        // Describes the assessment as it stands now. For a resuming candidate the
+        signedInName={auth?.user?.name ?? null}
+        resuming={!!mine}
+        // Describes the test as it stands now. For a resuming candidate the
         // session's frozen question set is the one that will actually be served,
-        // so if the assessment has been edited since they started, this summary
-        // can overstate or understate what is left to answer.
+        // so if the test has been edited since they started, this summary can
+        // overstate or understate what is left to answer.
         assessment={{
           title: assessment.title,
           instructions: assessment.instructions,

@@ -23,11 +23,13 @@ export default function ProblemsPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
+    } else if (status === "authenticated" && (session?.user as any)?.role !== "admin") {
+      router.push("/");
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session || (session.user as any)?.role !== "admin") return;
     let cancelled = false;
 
     (async () => {

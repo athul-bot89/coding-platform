@@ -12,7 +12,7 @@ interface Report {
   assessmentTitle: string;
   assessmentId: string;
   candidateName: string;
-  invitedEmail: string;
+  candidateEmail: string;
   signedInAs: string | null;
   state: string;
   startedAt: string;
@@ -106,9 +106,12 @@ export default function SessionReportPage() {
   const limitMs = report.durationMinutes * 60_000;
   const overranLimit = report.elapsedMs > limitMs;
   const shownElapsedMs = Math.min(Math.max(0, report.elapsedMs), limitMs);
-  const emailMismatch =
+  // The address is captured from the Google account at start, so a difference
+  // means the account was renamed afterwards — worth surfacing, since the name
+  // on this report and the one the candidate uses today are then not the same.
+  const emailChanged =
     report.signedInAs &&
-    report.signedInAs.toLowerCase() !== report.invitedEmail.toLowerCase();
+    report.signedInAs.toLowerCase() !== report.candidateEmail.toLowerCase();
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -122,7 +125,7 @@ export default function SessionReportPage() {
         <div className="flex items-end justify-between mt-1 gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold">{report.candidateName}</h1>
-            <p className="text-xs text-gray-500">{report.invitedEmail}</p>
+            <p className="text-xs text-gray-500">{report.candidateEmail}</p>
           </div>
           <div className="flex items-center gap-6">
             <Stat label="Score" value={`${report.totalScore}/${report.maxScore}`} accent={pct >= 60 ? "green" : pct >= 30 ? "yellow" : "red"} />
@@ -155,10 +158,10 @@ export default function SessionReportPage() {
             moment.
           </div>
         )}
-        {emailMismatch && (
+        {emailChanged && (
           <div className="bg-yellow-950/50 border border-yellow-900 rounded-lg px-4 py-3 text-sm text-yellow-200">
-            Signed in as <strong>{report.signedInAs}</strong>, which differs from the invited
-            address.
+            This account now signs in as <strong>{report.signedInAs}</strong>. The test was taken as{" "}
+            <strong>{report.candidateEmail}</strong>.
           </div>
         )}
 

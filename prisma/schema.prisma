@@ -139,7 +139,7 @@ model ProctorEvent {
 }
 
 // ---------------------------------------------------------------------------
-// Proctored assessments: Assessment -> Invitation (link) -> TestSession (run)
+// Proctored assessments: Assessment (one shared link) -> TestSession (one run)
 // ---------------------------------------------------------------------------
 
 model Assessment {
@@ -149,9 +149,13 @@ model Assessment {
   durationMinutes Int                 @default(90)
   maxViolations   Int                 @default(5) // 0 disables auto-submit; keep in sync with DEFAULT_MAX_VIOLATIONS
   isActive        Boolean             @default(true)
+  // The single link everyone opens. Rotating it kills every copy that is out in
+  // the world at once, which is the only lever there is on a link that anyone
+  // can forward — so it is a column, not a derivation of the id.
+  joinToken       String              @unique
   createdAt       DateTime            @default(now())
   problems        AssessmentProblem[]
-  invitations     Invitation[]
+  sessions        TestSession[]
 }
 
 model AssessmentProblem {
@@ -165,28 +169,15 @@ model AssessmentProblem {
   @@id([assessmentId, problemId])
 }
 
-model Invitation {
-  id             String       @id @default(cuid())
-  assessmentId   String
-  token          String       @unique // random hex, appears in the invite URL
-  candidateName  String
-  candidateEmail String // the Google account used to sign in must match this, stored trimmed and lowercased
-  status         String       @default("pending") // pending|started|submitted|expired|terminated
-  expiresAt      DateTime
-  createdAt      DateTime     @default(now())
-  assessment     Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  session        TestSession?
-
-  // One link per candidate per assessment. Two links would mean two sessions,
-  // each with its own full-duration clock, on the same set of questions.
-  @@unique([assessmentId, candidateEmail])
-  @@index([candidateEmail])
-}
-
 model TestSession {
   id             String         @id @default(cuid())
-  invitationId   String         @unique
+  assessmentId   String
   userId         String
+  // Snapshotted from the Google profile at start. The account can be renamed,
+  // or deleted outright, long after the test — a leaderboard that read through
+  // the live user row would then lose the name it is meant to be ranking.
+  candidateName  String
+  candidateEmail String // stored trimmed and lowercased
   startedAt      DateTime       @default(now())
   endsAt         DateTime // frozen server-side at start — the only clock that counts
   submittedAt    DateTime?
@@ -196,13 +187,19 @@ model TestSession {
   maxScore       Int            @default(0)
   lastSeenAt     DateTime       @default(now())
   tabLock        String? // owning tab's random id — evicts duplicate tabs
-  invitation     Invitation     @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  assessment     Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   attempts       Attempt[]
   events         ProctorEvent[]
   drafts         SessionDraft[]
   metrics        TypingMetric[]
   problems       SessionProblem[]
+
+  // One run per account per test. With a link anyone can forward, this
+  // constraint is what stops a candidate from reopening it for a second
+  // full-duration clock on the same questions.
+  @@unique([assessmentId, userId])
+  @@index([assessmentId, state])
 }
 
 // The questions a session was actually served, frozen at start.

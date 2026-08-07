@@ -2,26 +2,16 @@ import crypto from "crypto";
 import type { Problem, TestCase } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { pollAndScoreAttempt } from "@/lib/grading";
-import { INVITE_VALID_DAYS } from "@/lib/proctor-config";
 
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-export function generateInviteToken(): string {
+/** The token in a test's shared link. Unguessable, so the link is the gate. */
+export function generateJoinToken(): string {
   return crypto.randomBytes(16).toString("hex");
 }
 
-export function inviteUrl(token: string): string {
-  return `${BASE_URL.replace(/\/$/, "")}/invite/${token}`;
-}
-
-export function defaultInviteExpiry(days = INVITE_VALID_DAYS): Date {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-}
-
-/** Emails are compared case-insensitively — Google hands back varying casing. */
-export function emailsMatch(a?: string | null, b?: string | null): boolean {
-  if (!a || !b) return false;
-  return a.trim().toLowerCase() === b.trim().toLowerCase();
+export function testUrl(joinToken: string): string {
+  return `${BASE_URL.replace(/\/$/, "")}/t/${joinToken}`;
 }
 
 export type SessionEndState = "submitted" | "auto_submitted" | "terminated";
@@ -37,8 +27,8 @@ export interface SessionProblemView {
 /**
  * The problem set a session is entitled to, ordered as the candidate sees it.
  *
- * Always read through here rather than through `invitation.assessment.problems`:
- * the assessment's set is live and an admin may edit it mid-test, whereas the
+ * Always read through here rather than through `assessment.problems`: the
+ * assessment's set is live and an admin may edit it mid-test, whereas the
  * SessionProblem snapshot is what the candidate was actually given. Sessions
  * that predate the snapshot have no rows and fall back to the live set, which is
  * the best that can be reconstructed for them.
@@ -64,19 +54,15 @@ export async function loadSessionProblems(sessionId: string): Promise<SessionPro
   const session = await prisma.testSession.findUnique({
     where: { id: sessionId },
     select: {
-      invitation: {
+      assessment: {
         select: {
-          assessment: {
-            select: {
-              problems: { include: { problem: withCases }, orderBy: { ordinal: "asc" } },
-            },
-          },
+          problems: { include: { problem: withCases }, orderBy: { ordinal: "asc" } },
         },
       },
     },
   });
 
-  return (session?.invitation.assessment.problems ?? []).map((ap) => ({
+  return (session?.assessment.problems ?? []).map((ap) => ({
     problemId: ap.problemId,
     ordinal: ap.ordinal,
     points: ap.points,
@@ -135,10 +121,7 @@ export interface PerProblemScore {
   submissions: number;
 }
 
-/**
- * End a session for good: drain any in-flight grading, freeze the score, and
- * mirror the outcome onto the invitation so the link stops working.
- */
+/** End a session for good: drain any in-flight grading and freeze the score. */
 export async function finalizeSession(sessionId: string, state: SessionEndState) {
   const existing = await prisma.testSession.findUnique({ where: { id: sessionId } });
   if (!existing || existing.state !== "in_progress") return existing;
@@ -172,17 +155,10 @@ export async function finalizeSession(sessionId: string, state: SessionEndState)
 
   const { totalScore, maxScore } = await computeSessionScore(sessionId);
 
-  const updated = await prisma.testSession.update({
+  return prisma.testSession.update({
     where: { id: sessionId },
     data: { totalScore, maxScore },
   });
-
-  await prisma.invitation.update({
-    where: { id: updated.invitationId },
-    data: { status: state === "terminated" ? "terminated" : "submitted" },
-  });
-
-  return updated;
 }
 
 /** How many expired sessions one sweep finalizes; the rest wait for the next. */
@@ -215,14 +191,191 @@ export async function sweepExpiredSessions(limit = SWEEP_BATCH) {
   return settled.filter((r) => r.status === "fulfilled").length;
 }
 
-/** Also expire invitations whose window passed before anyone opened them. */
-export async function sweepExpiredInvitations() {
-  await prisma.invitation.updateMany({
-    where: { status: "pending", expiresAt: { lt: new Date() } },
-    data: { status: "expired" },
-  });
-}
-
 export function remainingMs(endsAt: Date): number {
   return Math.max(0, endsAt.getTime() - Date.now());
+}
+
+// ---------------------------------------------------------------------------
+// Leaderboard
+// ---------------------------------------------------------------------------
+
+export interface LeaderboardQuestion {
+  problemId: string;
+  ordinal: number;
+  title: string;
+  points: number;
+}
+
+export interface LeaderboardRow {
+  rank: number;
+  sessionId: string;
+  candidateName: string;
+  candidateEmail: string;
+  image: string | null;
+  state: string;
+  totalScore: number;
+  maxScore: number;
+  /** Points earned per question, keyed by problemId. Missing = never attempted. */
+  perProblem: Record<string, number>;
+  solvedCount: number;
+  submissionCount: number;
+  violationCount: number;
+  startedAt: Date;
+  submittedAt: Date | null;
+  elapsedMs: number;
+  /** Still sitting the test — the score below them is a running total. */
+  live: boolean;
+}
+
+/**
+ * Every candidate who has taken a test, ranked.
+ *
+ * Scores are recomputed here rather than read from `TestSession.totalScore`,
+ * which is only written at finalization: a candidate still working would
+ * otherwise sit at zero for the whole test. The frozen column and this
+ * computation agree once a session ends, since both run the same best-per-
+ * problem rule from `computeSessionScore`.
+ *
+ * Three queries regardless of how many candidates there are — the per-session
+ * loop in `computeSessionScore` would be one round-trip per row.
+ */
+export async function buildLeaderboard(assessmentId: string) {
+  const [assessment, sessions] = await Promise.all([
+    prisma.assessment.findUnique({
+      where: { id: assessmentId },
+      include: { problems: { include: { problem: true }, orderBy: { ordinal: "asc" } } },
+    }),
+    prisma.testSession.findMany({
+      where: { assessmentId },
+      include: { user: { select: { image: true } } },
+    }),
+  ]);
+
+  if (!assessment) return null;
+
+  const sessionIds = sessions.map((s) => s.id);
+
+  const [served, attempts] = await Promise.all([
+    prisma.sessionProblem.findMany({
+      where: { sessionId: { in: sessionIds } },
+      include: { problem: { select: { title: true } } },
+      orderBy: { ordinal: "asc" },
+    }),
+    prisma.attempt.findMany({
+      where: { sessionId: { in: sessionIds }, kind: "submit", state: "done" },
+      select: { sessionId: true, problemId: true, score: true, maxScore: true },
+    }),
+  ]);
+
+  // Columns come from the assessment's current question list, so the table has a
+  // stable shape. A candidate served a question that has since been removed still
+  // has it counted in their total; it just has no column of its own.
+  const questions: LeaderboardQuestion[] = assessment.problems.map((ap) => ({
+    problemId: ap.problemId,
+    ordinal: ap.ordinal,
+    title: ap.problem.title,
+    points: ap.points,
+  }));
+
+  const servedBySession = new Map<string, typeof served>();
+  for (const sp of served) {
+    const list = servedBySession.get(sp.sessionId) ?? [];
+    list.push(sp);
+    servedBySession.set(sp.sessionId, list);
+  }
+
+  // Best ratio per (session, problem) — retrying near the buzzer can only help.
+  const bestRatio = new Map<string, number>();
+  const submissionCounts = new Map<string, number>();
+  for (const a of attempts) {
+    if (!a.sessionId) continue;
+    const key = `${a.sessionId}:${a.problemId}`;
+    const ratio = a.maxScore > 0 ? a.score / a.maxScore : 0;
+    bestRatio.set(key, Math.max(bestRatio.get(key) ?? 0, ratio));
+    submissionCounts.set(a.sessionId, (submissionCounts.get(a.sessionId) ?? 0) + 1);
+  }
+
+  const now = Date.now();
+
+  const rows = sessions.map((s) => {
+    // Fall back to the live question set for sessions predating the snapshot,
+    // exactly as loadSessionProblems does.
+    const mine =
+      servedBySession.get(s.id) ??
+      assessment.problems.map((ap) => ({
+        sessionId: s.id,
+        problemId: ap.problemId,
+        ordinal: ap.ordinal,
+        points: ap.points,
+        problem: { title: ap.problem.title },
+      }));
+
+    const perProblem: Record<string, number> = {};
+    let totalScore = 0;
+    let maxScore = 0;
+    let solvedCount = 0;
+
+    for (const sp of mine) {
+      const ratio = bestRatio.get(`${s.id}:${sp.problemId}`) ?? 0;
+      const earned = Math.round(ratio * sp.points);
+      perProblem[sp.problemId] = earned;
+      totalScore += earned;
+      maxScore += sp.points;
+      if (ratio >= 1) solvedCount += 1;
+    }
+
+    const live = s.state === "in_progress";
+
+    return {
+      sessionId: s.id,
+      candidateName: s.candidateName,
+      candidateEmail: s.candidateEmail,
+      image: s.user?.image ?? null,
+      state: s.state,
+      totalScore,
+      maxScore,
+      perProblem,
+      solvedCount,
+      submissionCount: submissionCounts.get(s.id) ?? 0,
+      violationCount: s.violationCount,
+      startedAt: s.startedAt,
+      submittedAt: s.submittedAt,
+      // Capped at the deadline: someone who walked away cannot have used more
+      // time than the test allowed, however long before anyone looked.
+      elapsedMs: Math.max(
+        0,
+        Math.min((s.submittedAt ?? new Date(now)).getTime(), s.endsAt.getTime()) -
+          s.startedAt.getTime()
+      ),
+      live,
+    };
+  });
+
+  // Score first, then whoever got there faster. Candidates still working are
+  // ranked alongside everyone else on their running total, and flagged `live` so
+  // the table can say that their position is not final.
+  rows.sort((a, b) => b.totalScore - a.totalScore || a.elapsedMs - b.elapsedMs);
+
+  // Equal score and equal time is a genuine tie, so it shares a rank; the next
+  // candidate down then skips to their true position (1, 2, 2, 4).
+  const ranked: LeaderboardRow[] = [];
+  rows.forEach((r, i) => {
+    const prev = ranked[i - 1];
+    const tied =
+      prev && prev.totalScore === r.totalScore && prev.elapsedMs === r.elapsedMs;
+    ranked.push({ ...r, rank: tied ? prev.rank : i + 1 });
+  });
+
+  return {
+    assessment: {
+      id: assessment.id,
+      title: assessment.title,
+      durationMinutes: assessment.durationMinutes,
+      maxViolations: assessment.maxViolations,
+      isActive: assessment.isActive,
+      totalPoints: questions.reduce((s, q) => s + q.points, 0),
+    },
+    questions,
+    rows: ranked,
+  };
 }

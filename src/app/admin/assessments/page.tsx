@@ -16,7 +16,8 @@ interface AssessmentRow {
   createdAt: string;
   questionCount: number;
   totalPoints: number;
-  invitedCount: number;
+  joinUrl: string;
+  startedCount: number;
   completedCount: number;
 }
 
@@ -187,7 +188,7 @@ export default function AssessmentsPage() {
         ) : rows.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <p className="mb-2">No tests yet.</p>
-            <p className="text-sm">Create one, add questions, then generate candidate links.</p>
+            <p className="text-sm">Create one, add questions, then share its link.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -216,7 +217,7 @@ export default function AssessmentsPage() {
                   <div className="text-right shrink-0">
                     <div className="text-sm">
                       <span className="text-green-400 font-mono">{a.completedCount}</span>
-                      <span className="text-gray-600 font-mono">/{a.invitedCount}</span>
+                      <span className="text-gray-600 font-mono">/{a.startedCount}</span>
                     </div>
                     <div className="text-xs text-gray-500">completed</div>
                   </div>

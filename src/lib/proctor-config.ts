@@ -68,9 +68,6 @@ export const DRAFT_SAVE_MS = 2_000;
 /** How often buffered typing metrics are flushed. */
 export const METRICS_FLUSH_MS = 15_000;
 
-/** Default validity window for a freshly generated invite link. */
-export const INVITE_VALID_DAYS = 7;
-
 /**
  * What a candidate is told when a LOGGED_ONLY action is blocked. These are
  * statements of fact, not warnings: the action did not happen and nothing was

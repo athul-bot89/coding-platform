@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
-import { inviteUrl, sweepExpiredSessions, sweepExpiredInvitations } from "@/lib/assessment";
+import { testUrl, sweepExpiredSessions } from "@/lib/assessment";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin();
   if (guard.error) return guard.error;
 
   await sweepExpiredSessions();
-  await sweepExpiredInvitations();
 
   const assessment = await prisma.assessment.findUnique({
     where: { id: params.id },
     include: {
       problems: { include: { problem: true }, orderBy: { ordinal: "asc" } },
-      invitations: {
-        orderBy: { createdAt: "desc" },
-        include: { session: true },
-      },
+      sessions: { select: { state: true } },
     },
   });
 
@@ -38,6 +34,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     durationMinutes: assessment.durationMinutes,
     maxViolations: assessment.maxViolations,
     isActive: assessment.isActive,
+    joinUrl: testUrl(assessment.joinToken),
     problems: assessment.problems.map((ap) => ({
       problemId: ap.problemId,
       ordinal: ap.ordinal,
@@ -46,20 +43,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       difficulty: ap.problem.difficulty,
     })),
     availableProblems: allProblems,
-    invitations: assessment.invitations.map((i) => ({
-      id: i.id,
-      candidateName: i.candidateName,
-      candidateEmail: i.candidateEmail,
-      status: i.status,
-      expiresAt: i.expiresAt,
-      createdAt: i.createdAt,
-      url: inviteUrl(i.token),
-      sessionId: i.session?.id ?? null,
-      sessionState: i.session?.state ?? null,
-      score: i.session && i.session.state !== "in_progress" ? i.session.totalScore : null,
-      maxScore: i.session?.maxScore ?? null,
-      violationCount: i.session?.violationCount ?? null,
-    })),
+    startedCount: assessment.sessions.length,
+    inProgressCount: assessment.sessions.filter((s) => s.state === "in_progress").length,
+    completedCount: assessment.sessions.filter((s) => s.state !== "in_progress").length,
   });
 }
 

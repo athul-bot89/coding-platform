@@ -1,23 +1,56 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const isAdmin = (session?.user as any)?.role === "admin";
 
   useEffect(() => {
-    if (session) {
+    if (session && isAdmin) {
       router.push("/problems");
     }
-  }, [session, router]);
+  }, [session, isAdmin, router]);
 
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
+
+  // Signed-in non-admin: show a proper landing instead of redirect-looping
+  if (session && !isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
+        <div className="text-center max-w-md px-4">
+          <img
+            src="https://www.botangelos.com/assets/img/Botangelos_white.png"
+            alt="Botangelos"
+            className="h-12 mx-auto mb-6"
+          />
+          <h1 className="text-2xl font-bold mb-2">Welcome, {session.user?.name ?? "Candidate"}!</h1>
+          <p className="text-gray-400 mb-8">
+            You&apos;re signed in as{" "}
+            <span className="text-gray-300">{session.user?.email}</span>.
+          </p>
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-6">
+            <p className="text-sm text-gray-400">
+              To start a coding assessment, use the invite link shared by your
+              administrator. It will take you directly to your test.
+            </p>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="px-6 py-2 rounded-lg bg-gray-700 text-sm text-gray-300 hover:bg-gray-600 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     );
   }

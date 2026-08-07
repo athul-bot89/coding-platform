@@ -12,7 +12,7 @@ export default function SignIn() {
           className="h-10 mx-auto mb-6"
         />
         <button
-          onClick={() => signIn("google", { callbackUrl: "/problems" })}
+          onClick={() => signIn("google", { callbackUrl: "/" })}
           className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">

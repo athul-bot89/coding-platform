@@ -20,13 +20,13 @@ export default function ProblemsPage() {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const isAdmin = (session?.user as any)?.role === "admin";
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
-    } else if (status === "authenticated" && (session?.user as any)?.role !== "admin") {
-      router.push("/");
     }
-  }, [status, session, router]);
+  }, [status, router]);
 
   useEffect(() => {
     if (!session || (session.user as any)?.role !== "admin") return;
@@ -53,7 +53,52 @@ export default function ProblemsPage() {
     };
   }, [session, reloadKey]);
 
-  if (status === "loading" || loading) {
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white px-4">
+        <div className="max-w-md w-full bg-gray-800 border border-gray-700 rounded-xl p-8 text-center">
+          <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-950 border border-red-900 flex items-center justify-center">
+            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold">Access denied</h1>
+          <p className="mt-2 text-sm text-gray-400">
+            This page is only available to administrators.
+          </p>
+          {session?.user?.email && (
+            <p className="mt-4 text-xs text-gray-500">
+              Signed in as <span className="text-gray-300 break-all">{session.user.email}</span>
+            </p>
+          )}
+          <div className="mt-6 flex flex-col gap-2">
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="w-full px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm"
+            >
+              Sign in with a different account
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full px-4 py-2 rounded border border-gray-700 hover:bg-gray-700/40 text-sm text-gray-300"
+            >
+              Back to home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>

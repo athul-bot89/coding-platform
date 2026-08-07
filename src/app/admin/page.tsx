@@ -3,6 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { fetchJson, postJson, errorMessage, HttpError } from "@/lib/fetch-json";
+import { languageShortName } from "@/lib/languages";
 
 interface AttemptSummary {
   id: string;
@@ -43,6 +45,7 @@ export default function AdminPage() {
   const [events, setEvents] = useState<ProctorEvent[]>([]);
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -60,33 +63,44 @@ export default function AdminPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
       if (tab === "attempts") {
-        const res = await fetch("/api/admin/attempts");
-        const data = await res.json();
-        setAttempts(data.attempts);
+        const data = await fetchJson<{ attempts: AttemptSummary[] }>("/api/admin/attempts");
+        setAttempts(Array.isArray(data?.attempts) ? data.attempts : []);
       } else if (tab === "events") {
-        const res = await fetch("/api/admin/proctor-events");
-        const data = await res.json();
-        setEvents(data.events);
+        const data = await fetchJson<{ events: ProctorEvent[] }>("/api/admin/proctor-events");
+        setEvents(Array.isArray(data?.events) ? data.events : []);
       } else if (tab === "users") {
-        const res = await fetch("/api/admin/users");
-        const data = await res.json();
-        setUsers(data);
+        const data = await fetchJson<UserInfo[]>("/api/admin/users");
+        setUsers(Array.isArray(data) ? data : []);
       }
-    } catch (e) {
-      console.error("Failed to load data:", e);
+    } catch (err) {
+      handleLoadError(err, "Could not load admin data.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  // The role cached in the session can outlive the server's view of it, so a 401
+  // or 403 here means this browser is no longer an admin — leave the page rather
+  // than letting an error body reach the table renderers.
+  const handleLoadError = (err: unknown, fallback: string) => {
+    if (err instanceof HttpError && (err.status === 401 || err.status === 403)) {
+      router.push(err.status === 401 ? "/" : "/problems");
+      return;
+    }
+    setError(errorMessage(err, fallback));
   };
 
   const toggleAdmin = async (userId: string, currentRole: string) => {
     const newRole = currentRole === "admin" ? "user" : "admin";
-    await fetch("/api/admin/users", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, role: newRole }),
-    });
+    try {
+      await postJson("/api/admin/users", { userId, role: newRole }, { method: "PATCH" });
+    } catch (err) {
+      handleLoadError(err, "Could not change that user's role.");
+      return;
+    }
     loadData();
   };
 
@@ -97,10 +111,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
-  const LANGUAGE_NAMES: Record<number, string> = {
-    50: "C", 54: "C++", 62: "Java", 63: "JS", 71: "Python", 73: "Rust", 74: "TS",
-  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -113,6 +123,12 @@ export default function AdminPage() {
           </h1>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={() => router.push("/admin/problems")}
+            className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium hover:bg-blue-700"
+          >
+            Problem Bank
+          </button>
           <button
             onClick={() => router.push("/admin/assessments")}
             className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700"
@@ -151,6 +167,16 @@ export default function AdminPage() {
       <main className="p-6">
         {loading ? (
           <div className="text-center py-12 text-gray-500">Loading...</div>
+        ) : error ? (
+          <div className="max-w-md mx-auto text-center py-12">
+            <p className="text-sm text-red-300 mb-4">{error}</p>
+            <button
+              onClick={loadData}
+              className="px-4 py-2 bg-gray-700 rounded text-sm hover:bg-gray-600"
+            >
+              Retry
+            </button>
+          </div>
         ) : tab === "attempts" ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -180,7 +206,7 @@ export default function AdminPage() {
                       </div>
                     </td>
                     <td className="py-3 pr-4">{a.problem.title}</td>
-                    <td className="py-3 pr-4">{LANGUAGE_NAMES[a.languageId] || a.languageId}</td>
+                    <td className="py-3 pr-4">{languageShortName(a.languageId)}</td>
                     <td className="py-3 pr-4">
                       <span
                         className={`font-mono ${

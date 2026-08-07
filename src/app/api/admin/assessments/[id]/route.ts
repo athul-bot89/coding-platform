@@ -93,25 +93,54 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
   if (typeof body.isActive === "boolean") data.isActive = body.isActive;
 
-  // Replacing the problem set only affects tests started afterwards; sessions
-  // already in flight keep the questions they were served.
+  // Editing the problem set only affects tests started afterwards; sessions
+  // already in flight read their own SessionProblem snapshot, so a question can
+  // never be taken away from a candidate who has already solved it.
+  //
+  // The rows that did not change are left untouched rather than deleted and
+  // recreated, so a save that only reorders or reprices questions does not churn
+  // through every membership row on the way.
   if (Array.isArray(body.problems)) {
-    const entries = body.problems
+    type Entry = { problemId: string; ordinal: number; points: number };
+
+    const entries: Entry[] = body.problems
       .map((p: any, i: number) => ({
         problemId: String(p.problemId),
         ordinal: i + 1,
         points: Math.max(1, Math.min(10_000, Math.floor(Number(p.points) || 100))),
       }))
-      .filter((p: any) => p.problemId);
+      .filter((p: Entry) => p.problemId);
 
-    const unique = new Map(entries.map((e: any) => [e.problemId, e]));
+    const wanted = new Map<string, Entry>(entries.map((e) => [e.problemId, e]));
+    const current = await prisma.assessmentProblem.findMany({ where: { assessmentId: params.id } });
+    const currentIds = new Set(current.map((c) => c.problemId));
 
-    await prisma.$transaction([
-      prisma.assessmentProblem.deleteMany({ where: { assessmentId: params.id } }),
-      prisma.assessmentProblem.createMany({
-        data: Array.from(unique.values()).map((e: any) => ({ ...e, assessmentId: params.id })),
+    const removed = current.filter((c) => !wanted.has(c.problemId));
+    const added = Array.from(wanted.values()).filter((e) => !currentIds.has(e.problemId));
+    const changed = current.filter((c) => {
+      const e = wanted.get(c.problemId);
+      return e && (e.ordinal !== c.ordinal || e.points !== c.points);
+    });
+
+    const ops = [
+      ...removed.map((c) =>
+        prisma.assessmentProblem.delete({
+          where: { assessmentId_problemId: { assessmentId: params.id, problemId: c.problemId } },
+        })
+      ),
+      ...added.map((e) =>
+        prisma.assessmentProblem.create({ data: { ...e, assessmentId: params.id } })
+      ),
+      ...changed.map((c) => {
+        const e = wanted.get(c.problemId)!;
+        return prisma.assessmentProblem.update({
+          where: { assessmentId_problemId: { assessmentId: params.id, problemId: c.problemId } },
+          data: { ordinal: e.ordinal, points: e.points },
+        });
       }),
-    ]);
+    ];
+
+    if (ops.length > 0) await prisma.$transaction(ops);
   }
 
   if (Object.keys(data).length > 0) {

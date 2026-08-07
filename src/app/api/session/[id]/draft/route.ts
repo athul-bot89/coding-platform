@@ -6,7 +6,7 @@ import { requireLiveSession } from "@/lib/session-guard";
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireLiveSession(params.id);
   if (guard.error) return guard.error;
-  const { session } = guard;
+  const { session, problems } = guard;
 
   const { problemId, languageId, code } = await req.json().catch(() => ({}));
 
@@ -14,7 +14,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  const belongs = session.invitation.assessment.problems.some((p) => p.problemId === problemId);
+  // Checked against the session's frozen problem set rather than the
+  // assessment's current one, so an admin removing a question mid-test cannot
+  // start silently discarding the autosaves of a candidate still working on it.
+  const belongs = problems.some((p) => p.problemId === problemId);
   if (!belongs) {
     return NextResponse.json({ error: "Problem not in this test" }, { status: 400 });
   }

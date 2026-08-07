@@ -12,7 +12,7 @@ import { createAttempt } from "@/lib/grading";
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireLiveSession(params.id);
   if (guard.error) return guard.error;
-  const { session, userId } = guard;
+  const { session, userId, problems } = guard;
 
   const { problemId, languageId, sourceCode, kind } = await req.json().catch(() => ({}));
 
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "Write some code first" }, { status: 400 });
   }
 
-  const entry = session.invitation.assessment.problems.find((p) => p.problemId === problemId);
+  const entry = problems.find((p) => p.problemId === problemId);
   if (!entry) {
     return NextResponse.json({ error: "Problem not in this test" }, { status: 400 });
   }

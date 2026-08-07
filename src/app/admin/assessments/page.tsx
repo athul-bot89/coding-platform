@@ -4,6 +4,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { fetchJson, postJson, errorMessage, HttpError } from "@/lib/fetch-json";
+import { DEFAULT_MAX_VIOLATIONS } from "@/lib/proctor-config";
+
 interface AssessmentRow {
   id: string;
   title: string;
@@ -22,12 +25,14 @@ export default function AssessmentsPage() {
   const router = useRouter();
   const [rows, setRows] = useState<AssessmentRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     durationMinutes: 90,
-    maxViolations: 3,
+    maxViolations: DEFAULT_MAX_VIOLATIONS,
     instructions: "",
   });
 
@@ -38,31 +43,41 @@ export default function AssessmentsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const res = await fetch("/api/admin/assessments");
-      if (res.ok) setRows(await res.json());
+      const body = await fetchJson<AssessmentRow[]>("/api/admin/assessments");
+      setRows(Array.isArray(body) ? body : []);
+    } catch (err) {
+      // The admin role cached in the session cookie can outlive the server's view
+      // of it, so a 401 or 403 means this browser is no longer an admin.
+      if (err instanceof HttpError && (err.status === 401 || err.status === 403)) {
+        router.push(err.status === 401 ? "/" : "/problems");
+        return;
+      }
+      setRows([]);
+      setLoadError(errorMessage(err, "Could not load your tests."));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (session && (session.user as any)?.role === "admin") load();
   }, [session, load]);
 
   const create = async () => {
+    setSubmitting(true);
     setError(null);
-    const res = await fetch("/api/admin/assessments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const body = await res.json();
-    if (!res.ok) {
-      setError(body.error || "Could not create the test.");
-      return;
+    try {
+      const body = await postJson<{ id: string }>("/api/admin/assessments", form);
+      if (!body?.id) throw new Error("The test was not created — try again.");
+      // Left disabled on success: the editor is loading and a second click here
+      // would create a duplicate test.
+      router.push(`/admin/assessments/${body.id}`);
+    } catch (err) {
+      setError(errorMessage(err, "Could not create the test."));
+      setSubmitting(false);
     }
-    router.push(`/admin/assessments/${body.id}`);
   };
 
   if (status === "loading") {
@@ -149,15 +164,26 @@ export default function AssessmentsPage() {
             {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
             <button
               onClick={create}
-              className="px-5 py-2 bg-green-600 rounded font-medium text-sm hover:bg-green-700"
+              disabled={submitting}
+              className="px-5 py-2 bg-green-600 rounded font-medium text-sm hover:bg-green-700 disabled:opacity-50"
             >
-              Create and add questions
+              {submitting ? "Creating…" : "Create and add questions"}
             </button>
           </div>
         )}
 
         {loading ? (
           <p className="text-center py-12 text-gray-500">Loading…</p>
+        ) : loadError ? (
+          <div className="text-center py-16">
+            <p className="text-sm text-red-400 mb-3">{loadError}</p>
+            <button
+              onClick={load}
+              className="px-4 py-2 bg-gray-700 rounded-lg text-sm hover:bg-gray-600"
+            >
+              Try again
+            </button>
+          </div>
         ) : rows.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <p className="mb-2">No tests yet.</p>

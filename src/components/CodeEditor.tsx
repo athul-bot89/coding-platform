@@ -28,6 +28,11 @@ interface CodeEditorProps {
   readOnly?: boolean;
 }
 
+/** Monaco normalizes line endings inside the model, so compare EOL-insensitively. */
+function sameText(a: string, b: string): boolean {
+  return a === b || a.replace(/\r\n/g, "\n") === b.replace(/\r\n/g, "\n");
+}
+
 export function CodeEditor({
   language,
   value,
@@ -41,6 +46,16 @@ export function CodeEditor({
   onEditRef.current = onEdit;
   const onBlockedRef = useRef(onBlocked);
   onBlockedRef.current = onBlocked;
+
+  // The value we last handed to Monaco. @monaco-editor/react writes a changed
+  // `value` prop straight into the model, which fires the content-change
+  // listener below exactly as if the text had been typed — so switching language
+  // or restoring a saved draft would otherwise be accounted as one enormous
+  // paste-shaped insertion. Assigned during render on purpose: child effects run
+  // before the parent's, so an effect here would still be a render behind by the
+  // time the wrapper pushes the new value into the model.
+  const pushedValue = useRef(value);
+  pushedValue.current = value;
 
   const handleMount = (editor: any, monaco: any) => {
     if (!proctored) return;
@@ -65,6 +80,11 @@ export function CodeEditor({
     // Layer 5: whatever slips through still has to arrive as characters, and a
     // single large insertion is paste-shaped no matter how it got there.
     editor.onDidChangeModelContent((e: any) => {
+      // Only account for edits the candidate originated. A change that leaves the
+      // model saying exactly what we just pushed down was our own write, and a
+      // flush is a wholesale model reset, which nothing typed can produce.
+      if (e.isFlush || sameText(editor.getValue(), pushedValue.current)) return;
+
       let chars = 0;
       for (const change of e.changes) {
         chars += change.text?.length ?? 0;

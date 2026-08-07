@@ -3,6 +3,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { fetchJson, errorMessage } from "@/lib/fetch-json";
 
 interface Problem {
   id: string;
@@ -16,6 +17,8 @@ export default function ProblemsPage() {
   const router = useRouter();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -24,15 +27,29 @@ export default function ProblemsPage() {
   }, [status, router]);
 
   useEffect(() => {
-    if (session) {
-      fetch("/api/problems")
-        .then((r) => r.json())
-        .then((data) => {
-          setProblems(data);
-          setLoading(false);
-        });
-    }
-  }, [session]);
+    if (!session) return;
+    let cancelled = false;
+
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchJson<Problem[]>("/api/problems");
+        // A body that isn't a list would take the render down on .map().
+        if (!cancelled) setProblems(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (!cancelled) setError(errorMessage(err, "Could not load the problem list."));
+      } finally {
+        // Clearing this in `finally` is what keeps a failure from pinning the
+        // user on the spinner with no way forward.
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, reloadKey]);
 
   if (status === "loading" || loading) {
     return (
@@ -80,6 +97,17 @@ export default function ProblemsPage() {
       {/* Problems List */}
       <main className="max-w-4xl mx-auto py-8 px-4">
         <h2 className="text-xl font-semibold mb-6">Available Problems</h2>
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-900 bg-red-950/40 p-4">
+            <p className="text-sm text-red-300">{error}</p>
+            <button
+              onClick={() => setReloadKey((k) => k + 1)}
+              className="mt-3 px-3 py-1.5 bg-gray-700 rounded text-xs hover:bg-gray-600"
+            >
+              Try again
+            </button>
+          </div>
+        )}
         <div className="space-y-3">
           {problems.map((p) => (
             <div
@@ -95,7 +123,7 @@ export default function ProblemsPage() {
               </span>
             </div>
           ))}
-          {problems.length === 0 && (
+          {problems.length === 0 && !error && (
             <p className="text-gray-500 text-center py-12">No problems available.</p>
           )}
         </div>

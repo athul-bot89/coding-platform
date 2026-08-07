@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { finalizeSession } from "@/lib/assessment";
+import { finalizeSession, loadSessionProblems } from "@/lib/assessment";
 
 /**
  * Resolve the caller's own in-progress TestSession, or an error response.
@@ -10,6 +10,10 @@ import { finalizeSession } from "@/lib/assessment";
  * Every session endpoint goes through this so ownership, liveness and the clock
  * are checked in exactly one place. A session found past its `endsAt` is
  * finalized here rather than being allowed to accept one more request.
+ *
+ * The returned `problems` are the session's own frozen set, not the assessment's
+ * current one — callers must go through it so that editing an assessment cannot
+ * change what a running test contains.
  */
 export async function requireLiveSession(sessionId: string) {
   const auth = await getServerSession(authOptions);
@@ -21,20 +25,7 @@ export async function requireLiveSession(sessionId: string) {
 
   const testSession = await prisma.testSession.findUnique({
     where: { id: sessionId },
-    include: {
-      invitation: {
-        include: {
-          assessment: {
-            include: {
-              problems: {
-                include: { problem: { include: { testCases: { orderBy: { ordinal: "asc" } } } } },
-                orderBy: { ordinal: "asc" },
-              },
-            },
-          },
-        },
-      },
-    },
+    include: { invitation: { include: { assessment: true } } },
   });
 
   if (!testSession) {
@@ -64,7 +55,9 @@ export async function requireLiveSession(sessionId: string) {
     };
   }
 
-  return { session: testSession, userId };
+  const problems = await loadSessionProblems(sessionId);
+
+  return { session: testSession, userId, problems };
 }
 
 export type LiveSession = NonNullable<Awaited<ReturnType<typeof requireLiveSession>>["session"]>;

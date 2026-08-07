@@ -2,11 +2,26 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { CodeEditor } from "@/components/CodeEditor";
-import { getMonacoLanguage, LANGUAGE_NAMES } from "@/lib/languages";
+import { getMonacoLanguage, languageName } from "@/lib/languages";
 import { ProctorGuard, requestFullscreen } from "@/components/ProctorGuard";
 import { markdownToHtml } from "@/lib/markdown";
+import { fetchJson, postJson, errorMessage } from "@/lib/fetch-json";
+import {
+  JUDGE0_WRONG_ANSWER,
+  isAccepted,
+  isFailed,
+  statusLabel,
+} from "@/lib/judge0-status";
+
+// Grading normally settles in seconds; the cap stops an attempt that Judge0 has
+// silently dropped from polling for as long as the tab stays open.
+const POLL_INTERVAL_MS = 1500;
+const MAX_POLLS = 80;
+
+// Only used until the problem's own language list arrives.
+const DEFAULT_LANGUAGE_ID = 71;
 
 interface Problem {
   id: string;
@@ -47,41 +62,79 @@ export default function TestPage() {
   const slug = params.slug as string;
 
   const [problem, setProblem] = useState<Problem | null>(null);
-  const [selectedLang, setSelectedLang] = useState<number>(71);
+  const [selectedLang, setSelectedLang] = useState<number>(DEFAULT_LANGUAGE_ID);
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<AttemptResult | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
   const [violations, setViolations] = useState<string[]>([]);
   const [testStarted, setTestStarted] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
+
+  const mounted = useRef(true);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
+  // A queued poll outlives the page unless it is cancelled here.
   useEffect(() => {
-    if (session && slug) {
-      fetch(`/api/problems/${slug}`)
-        .then((r) => r.json())
-        .then((data) => {
-          setProblem(data);
-          const langs = data.allowedLanguages.split(",").map(Number);
-          setSelectedLang(langs[0]);
-          if (data.starterCode[langs[0]]) {
-            setCode(data.starterCode[langs[0]]);
-          }
-        });
-    }
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!session || !slug) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await fetchJson<Problem>(`/api/problems/${slug}`);
+        if (cancelled) return;
+
+        const langs = parseLanguageIds(data.allowedLanguages);
+        const first = langs[0] ?? DEFAULT_LANGUAGE_ID;
+
+        setProblem(data);
+        setSelectedLang(first);
+        setCode(data.starterCode?.[String(first)] ?? "");
+      } catch (err) {
+        if (!cancelled) setLoadError(errorMessage(err, "Could not load this problem."));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [session, slug]);
 
-  // Update code when language changes
-  useEffect(() => {
-    if (problem?.starterCode[selectedLang]) {
-      setCode(problem.starterCode[selectedLang]);
-    } else {
-      setCode("");
+  // Nothing typed here is persisted anywhere, so an overwritten buffer is gone
+  // for good: only reseed code the candidate never touched, leave it alone when
+  // the new language ships no template, and ask before discarding real work.
+  const changeLanguage = (nextLang: number) => {
+    if (!problem || nextLang === selectedLang) return;
+
+    const starter = problem.starterCode?.[String(nextLang)] ?? "";
+    const untouched =
+      !code.trim() || code === (problem.starterCode?.[String(selectedLang)] ?? "");
+
+    if (
+      starter &&
+      (untouched ||
+        window.confirm(
+          `Load the ${languageName(nextLang)} starter template? Your current code will be replaced.`
+        ))
+    ) {
+      setCode(starter);
     }
-  }, [selectedLang, problem]);
+
+    setSelectedLang(nextLang);
+  };
 
   const handleStartTest = () => {
     requestFullscreen();
@@ -104,46 +157,67 @@ export default function TestPage() {
     if (!problem || submitting) return;
     setSubmitting(true);
     setResult(null);
+    setRunError(null);
 
     try {
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          problemId: problem.id,
-          languageId: selectedLang,
-          sourceCode: code,
-        }),
+      const { attemptId } = await postJson<{ attemptId: string }>("/api/submit", {
+        problemId: problem.id,
+        languageId: selectedLang,
+        sourceCode: code,
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || "Submission failed");
-        setSubmitting(false);
-        return;
-      }
+      let polls = 0;
 
-      const { attemptId } = await res.json();
-
-      // Poll for results
       const poll = async () => {
-        const r = await fetch(`/api/attempts/${attemptId}`);
-        const data: AttemptResult = await r.json();
-        setResult(data);
+        if (!mounted.current) return;
 
-        if (data.state === "running") {
-          setTimeout(poll, 1500);
-        } else {
+        try {
+          const data = await fetchJson<AttemptResult>(`/api/attempts/${attemptId}`);
+          if (!mounted.current) return;
+          setResult(data);
+
+          if (data.state === "running" || data.state === "queued") {
+            if (++polls >= MAX_POLLS) {
+              setRunError("The judge is still working on this. Submit again to retry.");
+              setSubmitting(false);
+              return;
+            }
+            pollTimer.current = setTimeout(poll, POLL_INTERVAL_MS);
+            return;
+          }
+
+          setSubmitting(false);
+        } catch (err) {
+          if (!mounted.current) return;
+          setRunError(errorMessage(err, "Lost connection while grading."));
           setSubmitting(false);
         }
       };
 
-      setTimeout(poll, 1000);
-    } catch (e) {
+      pollTimer.current = setTimeout(poll, 1000);
+    } catch (err) {
+      setRunError(errorMessage(err, "Submission failed."));
       setSubmitting(false);
-      alert("Network error");
     }
   };
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white px-4">
+        <div className="max-w-md text-center">
+          <div className="text-4xl mb-4">⚠️</div>
+          <h1 className="text-xl font-semibold mb-2">Can&apos;t open this problem</h1>
+          <p className="text-sm text-gray-400">{loadError}</p>
+          <button
+            onClick={() => router.push("/problems")}
+            className="mt-6 px-4 py-2 bg-gray-700 rounded text-sm hover:bg-gray-600"
+          >
+            ← Back to problems
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (status === "loading" || !problem) {
     return (
@@ -186,7 +260,7 @@ export default function TestPage() {
     );
   }
 
-  const allowedLangs = problem.allowedLanguages.split(",").map(Number);
+  const allowedLangs = parseLanguageIds(problem.allowedLanguages);
 
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-white overflow-hidden no-select">
@@ -215,12 +289,12 @@ export default function TestPage() {
           )}
           <select
             value={selectedLang}
-            onChange={(e) => setSelectedLang(Number(e.target.value))}
+            onChange={(e) => changeLanguage(Number(e.target.value))}
             className="bg-gray-700 text-sm px-3 py-1.5 rounded border border-gray-600"
           >
             {allowedLangs.map((id) => (
               <option key={id} value={id}>
-                {LANGUAGE_NAMES[id] || `Language ${id}`}
+                {languageName(id)}
               </option>
             ))}
           </select>
@@ -271,6 +345,12 @@ export default function TestPage() {
             />
           </div>
 
+          {runError && (
+            <div className="border-t border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-300 shrink-0">
+              {runError}
+            </div>
+          )}
+
           {/* Results panel */}
           {result && (
             <div className="h-48 overflow-y-auto border-t border-gray-700 bg-gray-800 p-3">
@@ -291,30 +371,21 @@ export default function TestPage() {
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-2">
-                {result.runs.map((run) => (
+                {(result.runs ?? []).map((run) => (
                   <div
                     key={run.ordinal}
                     className={`text-xs p-2 rounded flex items-center justify-between ${
-                      run.statusId === 3
+                      isAccepted(run.statusId)
                         ? "bg-green-900/30 border border-green-700"
-                        : run.statusId && run.statusId > 3
+                        : isFailed(run.statusId)
                         ? "bg-red-900/30 border border-red-700"
                         : "bg-gray-700"
                     }`}
                   >
                     <span>
                       Test #{run.ordinal} ({run.kind}):{" "}
-                      {!run.statusId
-                        ? "Pending..."
-                        : run.statusId === 3
-                        ? "✓ Accepted"
-                        : run.statusId === 4
-                        ? "✗ Wrong Answer"
-                        : run.statusId === 5
-                        ? "✗ Time Limit"
-                        : run.statusId === 6
-                        ? "✗ Compile Error"
-                        : "✗ Runtime Error"}
+                      {isAccepted(run.statusId) ? "✓ " : isFailed(run.statusId) ? "✗ " : ""}
+                      {statusLabel(run.statusId)}
                     </span>
                     {run.timeS && (
                       <span className="text-gray-400">
@@ -325,8 +396,8 @@ export default function TestPage() {
                 ))}
               </div>
               {/* Show error details for sample cases */}
-              {result.runs
-                .filter((r) => r.kind === "sample" && r.statusId && r.statusId > 3)
+              {(result.runs ?? [])
+                .filter((r) => r.kind === "sample" && isFailed(r.statusId))
                 .map((r) => (
                   <div key={`detail-${r.ordinal}`} className="mt-2 text-xs bg-gray-900 p-2 rounded">
                     {r.compileOutput && (
@@ -341,7 +412,7 @@ export default function TestPage() {
                         <pre className="mt-1 whitespace-pre-wrap">{r.stderr}</pre>
                       </div>
                     )}
-                    {r.statusId === 4 && r.stdout !== null && (
+                    {r.statusId === JUDGE0_WRONG_ANSWER && r.stdout !== null && (
                       <div>
                         <span className="text-yellow-400">Your Output:</span>
                         <pre className="mt-1 whitespace-pre-wrap">{r.stdout}</pre>
@@ -357,5 +428,13 @@ export default function TestPage() {
       </div>
     </div>
   );
+}
+
+/** The API stores allowed languages as a CSV string; drop anything unparseable. */
+function parseLanguageIds(csv: string | undefined): number[] {
+  return (csv ?? "")
+    .split(",")
+    .map(Number)
+    .filter((id) => Number.isFinite(id) && id > 0);
 }
 

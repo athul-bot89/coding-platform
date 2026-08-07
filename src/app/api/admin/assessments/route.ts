@@ -45,8 +45,15 @@ export async function POST(req: NextRequest) {
     .json()
     .catch(() => ({}));
 
-  if (!title?.trim()) {
+  // Every field is untrusted JSON, so each is type-checked before anything is
+  // called on it — `{"title": 123}` has to come back a 400, not a 500 from
+  // .trim(). The PATCH handler validates the same way.
+  if (typeof title !== "string" || !title.trim()) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
+  }
+
+  if (instructions != null && typeof instructions !== "string") {
+    return NextResponse.json({ error: "Instructions must be text" }, { status: 400 });
   }
 
   const duration = Number(durationMinutes);

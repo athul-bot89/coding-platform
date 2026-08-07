@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { requestFullscreen } from "@/components/ProctorGuard";
+import {
+  FULLSCREEN_CHANGE_EVENTS,
+  isFullscreen,
+  requestFullscreen,
+} from "@/components/ProctorGuard";
 
 interface Props {
   violationCount: number;
@@ -22,10 +26,19 @@ export function FullscreenGate({ violationCount, maxViolations, children }: Prop
   const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
-    const sync = () => setBlocked(!document.fullscreenElement);
+    // Detection has to match the prefixed spread `requestFullscreen` uses, or a
+    // browser that entered fullscreen through a prefix sits behind this overlay
+    // forever with its clock running.
+    const sync = () => setBlocked(!isFullscreen());
     sync();
-    document.addEventListener("fullscreenchange", sync);
-    return () => document.removeEventListener("fullscreenchange", sync);
+    for (const evt of FULLSCREEN_CHANGE_EVENTS) {
+      document.addEventListener(evt, sync);
+    }
+    return () => {
+      for (const evt of FULLSCREEN_CHANGE_EVENTS) {
+        document.removeEventListener(evt, sync);
+      }
+    };
   }, []);
 
   const remaining = maxViolations > 0 ? maxViolations - violationCount : null;

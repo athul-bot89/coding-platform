@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, paginationParams } from "@/lib/admin-guard";
+import { isAccepted, isFailed, isPending } from "@/lib/judge0-status";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || (session.user as any).role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const guard = await requireAdmin();
+  if (guard.error) return guard.error;
 
   const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = paginationParams(searchParams);
 
   const [attempts, total] = await Promise.all([
     prisma.attempt.findMany({
@@ -41,9 +37,9 @@ export async function GET(req: NextRequest) {
       finishedAt: a.finishedAt,
       runsSummary: {
         total: a.runs.length,
-        passed: a.runs.filter((r) => r.statusId === 3).length,
-        failed: a.runs.filter((r) => r.statusId && r.statusId > 3).length,
-        pending: a.runs.filter((r) => !r.statusId || r.statusId <= 2).length,
+        passed: a.runs.filter((r) => isAccepted(r.statusId)).length,
+        failed: a.runs.filter((r) => isFailed(r.statusId)).length,
+        pending: a.runs.filter((r) => isPending(r.statusId)).length,
       },
     })),
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },

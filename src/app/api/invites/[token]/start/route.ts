@@ -48,6 +48,20 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
     return NextResponse.json({ sessionId: invitation.session.id, resumed: true });
   }
 
+  // One run of an assessment per candidate. Invitations are unique per
+  // (assessment, email), but a link minted before that constraint existed could
+  // still hand a candidate who has already sat the test a second fresh clock.
+  const priorRun = await prisma.testSession.findFirst({
+    where: {
+      userId: (session.user as any).id,
+      invitation: { assessmentId: invitation.assessmentId },
+    },
+    select: { id: true },
+  });
+  if (priorRun) {
+    return NextResponse.json({ error: "You have already taken this test" }, { status: 409 });
+  }
+
   if (invitation.expiresAt.getTime() < Date.now()) {
     await prisma.invitation.update({
       where: { id: invitation.id },
@@ -65,19 +79,37 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
   }
 
   const now = Date.now();
-  const testSession = await prisma.testSession.create({
-    data: {
-      invitationId: invitation.id,
-      userId: (session.user as any).id,
-      startedAt: new Date(now),
-      endsAt: new Date(now + invitation.assessment.durationMinutes * 60_000),
-      maxScore: invitation.assessment.problems.reduce((s, p) => s + p.points, 0),
-    },
-  });
+  const served = invitation.assessment.problems;
 
-  await prisma.invitation.update({
-    where: { id: invitation.id },
-    data: { status: "started" },
+  // The snapshot is written in the same transaction as the session. A session
+  // that existed without its own problem set would fall back to the assessment's
+  // live one, and so be exposed to exactly the mid-test edits it exists to shut out.
+  const testSession = await prisma.$transaction(async (tx) => {
+    const created = await tx.testSession.create({
+      data: {
+        invitationId: invitation.id,
+        userId: (session.user as any).id,
+        startedAt: new Date(now),
+        endsAt: new Date(now + invitation.assessment.durationMinutes * 60_000),
+        maxScore: served.reduce((s, p) => s + p.points, 0),
+      },
+    });
+
+    await tx.sessionProblem.createMany({
+      data: served.map((ap) => ({
+        sessionId: created.id,
+        problemId: ap.problemId,
+        ordinal: ap.ordinal,
+        points: ap.points,
+      })),
+    });
+
+    await tx.invitation.update({
+      where: { id: invitation.id },
+      data: { status: "started" },
+    });
+
+    return created;
   });
 
   return NextResponse.json({ sessionId: testSession.id, resumed: false });

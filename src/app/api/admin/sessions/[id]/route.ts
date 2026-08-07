@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
-import { computeSessionScore, sweepExpiredSessions } from "@/lib/assessment";
+import { computeSessionScore, loadSessionProblems, sweepExpiredSessions } from "@/lib/assessment";
 import { BURST_CHARS } from "@/lib/proctor-config";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -14,13 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     where: { id: params.id },
     include: {
       user: { select: { name: true, email: true, image: true } },
-      invitation: {
-        include: {
-          assessment: {
-            include: { problems: { include: { problem: true }, orderBy: { ordinal: "asc" } } },
-          },
-        },
-      },
+      invitation: { include: { assessment: true } },
       events: { orderBy: { createdAt: "asc" } },
       metrics: true,
       attempts: {
@@ -39,7 +33,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const startMs = session.startedAt.getTime();
   const metricByProblem = new Map(session.metrics.map((m) => [m.problemId, m]));
 
-  const questions = session.invitation.assessment.problems.map((ap) => {
+  // The questions this candidate was served, not the assessment's current set —
+  // the report has to reflect what they actually sat, edits since notwithstanding.
+  const served = await loadSessionProblems(session.id);
+
+  const questions = served.map((ap) => {
     const score = perProblem.find((p) => p.problemId === ap.problemId);
     const attempts = session.attempts.filter((a) => a.problemId === ap.problemId);
 
@@ -116,7 +114,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     endsAt: session.endsAt,
     submittedAt: session.submittedAt,
     durationMinutes: session.invitation.assessment.durationMinutes,
-    elapsedMs: (session.submittedAt ?? new Date()).getTime() - startMs,
+    // Capped at the deadline: a candidate who walked away cannot have used more
+    // time than the test allowed, however long it took for anyone to notice.
+    elapsedMs: Math.max(
+      0,
+      Math.min((session.submittedAt ?? new Date()).getTime(), session.endsAt.getTime()) - startMs
+    ),
     violationCount: session.violationCount,
     maxViolations: session.invitation.assessment.maxViolations,
     totalScore,

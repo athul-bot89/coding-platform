@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const attempt = await prisma.attempt.findUnique({
     where: { id: params.id },
-    select: { id: true, userId: true },
+    select: { id: true, userId: true, sessionId: true },
   });
 
   if (!attempt) {
@@ -23,6 +23,23 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
   if (attempt.userId !== userId && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Proctored attempts stay readable here — this is the route the session UI
+  // polls for its own results, and a candidate is entitled to the verdicts on
+  // what they submitted. Practice attempts are the ones to close off: one queued
+  // before the test began would otherwise keep answering hidden-case questions
+  // mid-exam, which is exactly the oracle /api/submit refuses to open.
+  if (!isAdmin && !attempt.sessionId) {
+    const liveSessions = await prisma.testSession.count({
+      where: { userId, state: "in_progress" },
+    });
+    if (liveSessions > 0) {
+      return NextResponse.json(
+        { error: "Practice results are unavailable while an assessment is in progress" },
+        { status: 409 }
+      );
+    }
   }
 
   const graded = await pollAndScoreAttempt(params.id);

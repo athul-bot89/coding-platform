@@ -1,3 +1,5 @@
+import { isTerminalStatus } from "@/lib/judge0-status";
+
 const JUDGE0_URL = process.env.JUDGE0_URL || "http://65.0.29.135:2358";
 const JUDGE0_TOKEN = process.env.JUDGE0_TOKEN || "";
 
@@ -155,10 +157,34 @@ export async function getBatchSubmissions(tokens: string[]): Promise<SubmissionR
     }
 
     const data = await res.json();
+
+    // Judge0 does not promise one entry per requested token: a token it no
+    // longer knows about may come back as null, or be omitted from the array
+    // entirely, which shifts every later entry. Index alignment is therefore
+    // unsafe — key the response by the token each submission reports, then
+    // answer for every token that was asked about.
+    if (!Array.isArray(data.submissions)) {
+      // A 200 carrying an unexpected body is an anomaly, not a set of verdicts.
+      // Throwing keeps the caller's retry behaviour; answering for every token
+      // would report the whole batch as dropped and fail the attempt for good.
+      throw new Error("Judge0 batch GET returned no submissions array");
+    }
+
+    const byToken = new Map<string, any>();
     for (const item of data.submissions) {
+      if (item?.token) {
+        byToken.set(item.token, item);
+      }
+    }
+
+    for (const token of chunk) {
+      const item = byToken.get(token);
       if (item == null) {
+        // The placeholder keeps the requested token so the caller can tell
+        // which submission was dropped. It carries no status, which is how a
+        // disowned token is distinguished from one that is merely still queued.
         results.push({
-          token: "",
+          token,
           stdout: null,
           stderr: null,
           compile_output: null,
@@ -186,5 +212,5 @@ export async function getBatchSubmissions(tokens: string[]): Promise<SubmissionR
 }
 
 export function isTerminal(statusId: number): boolean {
-  return statusId > 2;
+  return isTerminalStatus(statusId);
 }

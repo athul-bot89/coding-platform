@@ -79,17 +79,27 @@ export default async function InvitePage({ params }: { params: { token: string }
     );
   }
 
-  if (!assessment.isActive) {
-    return <DeadLink title="Test unavailable" message="This test has been closed by the organiser." />;
-  }
+  // Both of these are reasons not to *begin* a test, so they only apply when
+  // there is no session yet — the start endpoint returns a live session before it
+  // looks at either. A candidate whose clock is already running must not be
+  // locked out of it because the organiser closed the assessment or emptied its
+  // question list while they were working; their session carries its own frozen
+  // copy of the questions, so it is still playable.
+  if (!invitation.session) {
+    if (!assessment.isActive) {
+      return (
+        <DeadLink title="Test unavailable" message="This test has been closed by the organiser." />
+      );
+    }
 
-  if (assessment.problems.length === 0) {
-    return (
-      <DeadLink
-        title="Test not ready"
-        message="This test has no questions yet. Please check back shortly."
-      />
-    );
+    if (assessment.problems.length === 0) {
+      return (
+        <DeadLink
+          title="Test not ready"
+          message="This test has no questions yet. Please check back shortly."
+        />
+      );
+    }
   }
 
   const session = await getServerSession(authOptions);
@@ -105,6 +115,10 @@ export default async function InvitePage({ params }: { params: { token: string }
         signedInEmail={signedInEmail}
         matched={matched}
         resuming={!!invitation.session}
+        // Describes the assessment as it stands now. For a resuming candidate the
+        // session's frozen question set is the one that will actually be served,
+        // so if the assessment has been edited since they started, this summary
+        // can overstate or understate what is left to answer.
         assessment={{
           title: assessment.title,
           instructions: assessment.instructions,

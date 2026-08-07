@@ -108,7 +108,9 @@ Buzz
         instructions:
           "Solve both questions. You may submit as often as you like — your best submission for each question counts.",
         durationMinutes: 45,
-        maxViolations: 3,
+        // Mirrors DEFAULT_MAX_VIOLATIONS in src/lib/proctor-config.ts — inlined
+        // because the seed runs under bare ts-node, which does not resolve "@/".
+        maxViolations: 5,
       },
     }));
 

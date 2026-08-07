@@ -69,6 +69,7 @@ model Problem {
   testCases         TestCase[]
   attempts          Attempt[]
   assessments       AssessmentProblem[]
+  sessionProblems   SessionProblem[]
 }
 
 model TestCase {
@@ -146,7 +147,7 @@ model Assessment {
   title           String
   instructions    String? // markdown, shown on the rules screen
   durationMinutes Int                 @default(90)
-  maxViolations   Int                 @default(3) // 0 disables auto-submit
+  maxViolations   Int                 @default(5) // 0 disables auto-submit; keep in sync with DEFAULT_MAX_VIOLATIONS
   isActive        Boolean             @default(true)
   createdAt       DateTime            @default(now())
   problems        AssessmentProblem[]
@@ -169,13 +170,16 @@ model Invitation {
   assessmentId   String
   token          String       @unique // random hex, appears in the invite URL
   candidateName  String
-  candidateEmail String // the Google account used to sign in must match this
+  candidateEmail String // the Google account used to sign in must match this, stored trimmed and lowercased
   status         String       @default("pending") // pending|started|submitted|expired|terminated
   expiresAt      DateTime
   createdAt      DateTime     @default(now())
   assessment     Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   session        TestSession?
 
+  // One link per candidate per assessment. Two links would mean two sessions,
+  // each with its own full-duration clock, on the same set of questions.
+  @@unique([assessmentId, candidateEmail])
   @@index([candidateEmail])
 }
 
@@ -198,6 +202,23 @@ model TestSession {
   events         ProctorEvent[]
   drafts         SessionDraft[]
   metrics        TypingMetric[]
+  problems       SessionProblem[]
+}
+
+// The questions a session was actually served, frozen at start.
+//
+// Sessions read their problem set from here rather than from AssessmentProblem,
+// so an admin editing an assessment mid-test cannot take a question away from a
+// candidate who has already solved it, nor rescale the points it was worth.
+model SessionProblem {
+  sessionId String
+  problemId String
+  ordinal   Int
+  points    Int         @default(100)
+  session   TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  problem   Problem     @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, problemId])
 }
 
 // Autosaved editor content — survives refresh, crash, and question switching.

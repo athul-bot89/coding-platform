@@ -4,6 +4,7 @@ import { signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { markdownToHtml } from "@/lib/markdown";
+import { requestFullscreen } from "@/components/ProctorGuard";
 
 interface Props {
   token: string;
@@ -40,11 +41,20 @@ export function InviteClient(props: Props) {
     // Fullscreen must be requested inside the click handler — the browser
     // rejects a programmatic request once the user gesture has been consumed by
     // an await. So we enter fullscreen first, then create the session.
-    try {
-      await document.documentElement.requestFullscreen();
-    } catch {
-      // Denied or unsupported; the FullscreenGate on the test screen will
-      // immediately prompt the candidate to enter it.
+    //
+    // A refusal has to stop the start. Fullscreen is what the whole proctoring
+    // story rests on: a session that never entered it can never leave it either,
+    // so no fullscreen_exit is ever recorded and the candidate sits the entire
+    // test windowed with reference material beside it, with nothing on the report
+    // to say so. There is no session to attach a proctor event to yet, so the
+    // candidate is told and the clock never starts — pressing Start again
+    // retries, which is all a fresh user gesture needs.
+    if (!(await requestFullscreen())) {
+      setError(
+        "This test must run in fullscreen and your browser would not allow it. Allow fullscreen for this site and press Start test again, or reopen this link in an up-to-date Chrome, Edge, Firefox or Safari."
+      );
+      setStarting(false);
+      return;
     }
 
     try {
@@ -182,14 +192,17 @@ export function InviteClient(props: Props) {
         <h3 className="font-semibold text-red-300 text-sm mb-2">This test is proctored</h3>
         <ul className="space-y-1.5 text-xs text-gray-300">
           <li>• The test runs in <strong>fullscreen</strong>. Leaving fullscreen hides the test and records a warning.</li>
-          <li>• <strong>Copy and paste are completely disabled</strong> — including inside the code editor.</li>
-          <li>• Switching tabs or windows is <strong>detected and recorded</strong>.</li>
+          <li>• Switching tabs or windows <strong>records a warning</strong>.</li>
           {assessment.maxViolations > 0 && (
             <li>
               • After <strong>{assessment.maxViolations} warnings</strong> your test is submitted
               automatically and you cannot continue.
             </li>
           )}
+          <li>
+            • <strong>Copy and paste are completely disabled</strong> — including inside the code
+            editor. These are simply blocked and do <strong>not</strong> use up a warning.
+          </li>
           <li>• The timer runs on our servers. Closing the tab does <strong>not</strong> pause it.</li>
           <li>• Typing patterns are recorded to detect pasted code.</li>
         </ul>

@@ -12,8 +12,23 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const problem = await prisma.problem.findUnique({
-    where: { slug: params.slug },
+  // Same rule as the problem list: during a proctored test the session page is
+  // the only surface a candidate gets. Otherwise the un-proctored editor doubles
+  // as a scratchpad where nothing is recorded and nothing is measured.
+  const liveSessions = await prisma.testSession.count({
+    where: { userId: (session.user as any).id, state: "in_progress" },
+  });
+  if (liveSessions > 0) {
+    return NextResponse.json(
+      { error: "You have an assessment in progress — finish it to practise" },
+      { status: 409 }
+    );
+  }
+
+  // Retired problems are not served: the statement and its sample cases stop
+  // being something the platform stands behind once isActive is off.
+  const problem = await prisma.problem.findFirst({
+    where: { slug: params.slug, isActive: true },
     include: {
       testCases: {
         where: { kind: "sample" },

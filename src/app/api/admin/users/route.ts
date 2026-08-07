@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
-export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || (session.user as any).role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export async function GET() {
+  const guard = await requireAdmin();
+  if (guard.error) return guard.error;
 
   const users = await prisma.user.findMany({
     select: {
@@ -25,14 +22,19 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || (session.user as any).role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const guard = await requireAdmin();
+  if (guard.error) return guard.error;
+
+  const { userId, role } = await req.json().catch(() => ({}));
+  if (typeof userId !== "string" || !userId || !["user", "admin"].includes(role)) {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const { userId, role } = await req.json();
-  if (!userId || !["user", "admin"].includes(role)) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  // Prisma turns an update against a missing row into a throw, which would read
+  // as a server fault rather than the stale user list it usually is.
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  if (!target) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   await prisma.user.update({ where: { id: userId }, data: { role } });

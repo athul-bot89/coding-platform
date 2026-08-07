@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireLiveSession } from "@/lib/session-guard";
 import { finalizeSession } from "@/lib/assessment";
-import { VALID_EVENTS, isCountedEvent } from "@/lib/proctor-config";
+import { VALID_EVENTS, isCountedEvent, truncateEventDetail } from "@/lib/proctor-config";
 
 /**
  * Record a proctoring event. This endpoint — not the browser — decides whether
@@ -27,15 +27,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       userId,
       sessionId: session.id,
       event,
-      detail: typeof detail === "string" ? detail.slice(0, 500) : null,
+      detail: truncateEventDetail(detail),
       counted,
     },
   });
 
+  // `counted` goes back to the client so the UI never has to guess which events
+  // burn a warning. It used to infer that from the event name and told a
+  // candidate "Warning 2 of 5" for a blocked right-click that had incremented
+  // nothing.
   if (!counted) {
     return NextResponse.json({
       violationCount: session.violationCount,
       maxViolations: session.invitation.assessment.maxViolations,
+      counted: false,
       terminated: false,
     });
   }
@@ -55,6 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({
     violationCount: updated.violationCount,
     maxViolations: max,
+    counted: true,
     terminated,
   });
 }

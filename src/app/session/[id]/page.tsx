@@ -8,8 +8,19 @@ import { ProctorGuard } from "@/components/ProctorGuard";
 import { FullscreenGate } from "@/components/FullscreenGate";
 import { TestTimer } from "@/components/TestTimer";
 import { markdownToHtml } from "@/lib/markdown";
-import { statusLabel } from "@/lib/grading";
-import { HEARTBEAT_MS, DRAFT_SAVE_MS, METRICS_FLUSH_MS } from "@/lib/proctor-config";
+import { statusLabel, isAccepted, isFailed, JUDGE0_WRONG_ANSWER } from "@/lib/judge0-status";
+import { fetchJson, postJson, HttpError, errorMessage } from "@/lib/fetch-json";
+import {
+  HEARTBEAT_MS,
+  DRAFT_SAVE_MS,
+  METRICS_FLUSH_MS,
+  BLOCKED_MESSAGES,
+  BLOCKED_FALLBACK,
+} from "@/lib/proctor-config";
+
+/** Cadence of the grading poll, and how long it keeps asking before giving up. */
+const POLL_INTERVAL_MS = 1500;
+const POLL_BUDGET_MS = 90_000;
 
 interface SessionProblem {
   index: number;
@@ -78,6 +89,7 @@ export default function SessionPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [editors, setEditors] = useState<Record<string, { code: string; languageId: number }>>({});
   const [results, setResults] = useState<Record<string, RunResult | null>>({});
+  const [resultErrors, setResultErrors] = useState<Record<string, string | null>>({});
   const [busy, setBusy] = useState<Record<string, "run" | "submit" | null>>({});
   const [violations, setViolations] = useState({ count: 0, max: 0 });
   const [deadline, setDeadline] = useState<number | null>(null);
@@ -94,7 +106,12 @@ export default function SessionPage() {
   const metrics = useRef<Record<string, MetricBuffer>>({});
   const lastEditAt = useRef<Record<string, number>>({});
   const draftTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pollTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const endingRef = useRef(false);
+  const unmounted = useRef(false);
+  // Heartbeat state, read from refs so the interval never has to be rebuilt.
+  const sessionReady = useRef(false);
+  const evictedRef = useRef(false);
 
   const problems = data?.problems ?? [];
   const active = problems[activeIdx];
@@ -102,6 +119,17 @@ export default function SessionPage() {
   const flash = useCallback((msg: string) => {
     setToast(msg);
     setTimeout(() => setToast((t) => (t === msg ? null : t)), 3200);
+  }, []);
+
+  // The grading poll reschedules itself, so it has to be told when the screen is
+  // gone; otherwise it keeps firing — and keeps setting state — long after
+  // `router.replace` has sent the candidate to the completion page.
+  useEffect(() => {
+    unmounted.current = false;
+    return () => {
+      unmounted.current = true;
+      for (const timer of Object.values(pollTimers.current)) clearTimeout(timer);
+    };
   }, []);
 
   // ---- Ending the test ------------------------------------------------------
@@ -153,9 +181,11 @@ export default function SessionPage() {
           return;
         }
 
-        if (event === "paste" || event === "copy" || event === "cut") {
-          flash("Copy and paste are disabled in this test.");
-        } else if (body.violationCount > 0 && event !== "fullscreen_exit") {
+        // The server decides what counts; the message follows that, so a blocked
+        // action is never dressed up as a warning.
+        if (!body.counted) {
+          flash(BLOCKED_MESSAGES[event] ?? BLOCKED_FALLBACK);
+        } else if (event !== "fullscreen_exit") {
           // The fullscreen overlay already shows its own counter.
           flash(
             body.maxViolations > 0
@@ -192,6 +222,7 @@ export default function SessionPage() {
 
         const payload = body as SessionData;
         setData(payload);
+        sessionReady.current = true;
         setViolations({ count: payload.violationCount, max: payload.maxViolations });
         setDeadline(Date.now() + payload.remainingMs);
 
@@ -216,41 +247,41 @@ export default function SessionPage() {
 
   // ---- Heartbeat: clock re-sync + duplicate-tab eviction --------------------
 
+  // Established once, on mount, and gated on refs rather than on `data`. Listing
+  // `data` here restarted the interval on every submission — `execute` replaces
+  // the payload to bump submissionCount — so a candidate submitting faster than
+  // HEARTBEAT_MS never completed a tick and never beat at all: stale lastSeenAt,
+  // no clock re-sync, and no duplicate-tab eviction.
   useEffect(() => {
-    if (!data || evicted) return;
-
     const beat = async () => {
-      try {
-        const res = await fetch(`/api/session/${sessionId}/heartbeat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tabId }),
-        });
-        const body = await res.json().catch(() => ({}));
+      if (!sessionReady.current || evictedRef.current || endingRef.current) return;
 
-        if (res.status === 409 && body.evicted) {
-          setEvicted(true);
-          return;
-        }
-        if (!res.ok) {
-          if (body.ended && !endingRef.current) {
+      try {
+        const body = await postJson(`/api/session/${sessionId}/heartbeat`, { tabId });
+
+        // The server clock is the only one that matters.
+        setDeadline(Date.now() + body.remainingMs);
+        setViolations({ count: body.violationCount, max: body.maxViolations });
+      } catch (err) {
+        if (err instanceof HttpError) {
+          if (err.status === 409 && err.body?.evicted) {
+            evictedRef.current = true;
+            setEvicted(true);
+            return;
+          }
+          if (err.body?.ended && !endingRef.current) {
             endingRef.current = true;
             router.replace(`/session/${sessionId}/complete?reason=timeout`);
           }
           return;
         }
-
-        // The server clock is the only one that matters.
-        setDeadline(Date.now() + body.remainingMs);
-        setViolations({ count: body.violationCount, max: body.maxViolations });
-      } catch {
         // Offline; the next beat re-syncs.
       }
     };
 
     const id = setInterval(beat, HEARTBEAT_MS);
     return () => clearInterval(id);
-  }, [data, evicted, sessionId, tabId, router]);
+  }, [sessionId, tabId, router]);
 
   // ---- Draft autosave -------------------------------------------------------
 
@@ -276,12 +307,15 @@ export default function SessionPage() {
       for (const id of ids) {
         const buf = metrics.current[id];
         if (!buf || (buf.keystrokes === 0 && buf.bursts.length === 0)) continue;
+
+        // The window is swapped out rather than cleared, so keystrokes landing
+        // while the POST is in flight accumulate in the fresh buffer and can't be
+        // sent twice. If the POST never lands the unsent window is merged back:
+        // an offline blip must not silently erase a window's paste evidence.
         metrics.current[id] = emptyBuffer();
-        fetch(`/api/session/${sessionId}/metrics`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ problemId: id, ...buf }),
-        }).catch(() => {});
+        postJson(`/api/session/${sessionId}/metrics`, { problemId: id, ...buf }).catch(() => {
+          mergeBuffer((metrics.current[id] ||= emptyBuffer()), buf);
+        });
       }
     },
     [sessionId]
@@ -359,7 +393,13 @@ export default function SessionPage() {
 
       setBusy((b) => ({ ...b, [problem.id]: kind }));
       setResults((r) => ({ ...r, [problem.id]: null }));
+      setResultErrors((e) => ({ ...e, [problem.id]: null }));
       flushMetrics(problem.id);
+
+      const giveUp = (message: string) => {
+        setBusy((b) => ({ ...b, [problem.id]: null }));
+        setResultErrors((e) => ({ ...e, [problem.id]: message }));
+      };
 
       try {
         const res = await fetch(`/api/session/${sessionId}/submit`, {
@@ -385,14 +425,32 @@ export default function SessionPage() {
           return;
         }
 
+        const pollUntil = Date.now() + POLL_BUDGET_MS;
+
         const poll = async () => {
+          if (unmounted.current || endingRef.current) return;
+
           try {
-            const r = await fetch(`/api/attempts/${body.attemptId}`);
-            const result: RunResult = await r.json();
+            // fetchJson throws on a non-2xx. Storing the parsed body unchecked used
+            // to turn an expired cookie into `{ error: "Unauthorized" }` sitting in
+            // `results`, which stopped the polling and then took the whole test
+            // screen down the moment the panel tried to read `.runs` off it.
+            const result = await fetchJson<RunResult>(`/api/attempts/${body.attemptId}`);
+            if (unmounted.current || endingRef.current) return;
+
             setResults((prev) => ({ ...prev, [problem.id]: result }));
 
             if (result.state === "running" || result.state === "queued") {
-              setTimeout(poll, 1500);
+              // Judge0 can leave an attempt running indefinitely; polling for the
+              // rest of the test only burns requests. Whatever is still in flight is
+              // drained server-side when the session is finalized.
+              if (Date.now() > pollUntil) {
+                giveUp(
+                  "Still grading — this is taking longer than usual. Your submission is saved and will still be scored; you can keep working."
+                );
+                return;
+              }
+              pollTimers.current[problem.id] = setTimeout(poll, POLL_INTERVAL_MS);
               return;
             }
 
@@ -418,13 +476,14 @@ export default function SessionPage() {
                   : d
               );
             }
-          } catch {
-            setBusy((b) => ({ ...b, [problem.id]: null }));
-            flash("Lost connection while grading. Try again.");
+          } catch (err) {
+            if (unmounted.current || endingRef.current) return;
+            giveUp(gradingError(err));
           }
         };
 
-        setTimeout(poll, 1200);
+        clearTimeout(pollTimers.current[problem.id]);
+        pollTimers.current[problem.id] = setTimeout(poll, POLL_INTERVAL_MS);
       } catch {
         setBusy((b) => ({ ...b, [problem.id]: null }));
         flash("Network error.");
@@ -463,7 +522,7 @@ export default function SessionPage() {
     );
   }
 
-  if (!data || !active || deadline === null) {
+  if (!data || deadline === null) {
     return (
       <Centered>
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-500 mx-auto" />
@@ -471,8 +530,51 @@ export default function SessionPage() {
     );
   }
 
+  // The payload loaded but there is no question to show — an assessment with its
+  // problems removed, or an index that no longer exists. A spinner here would pin
+  // the candidate for the rest of their timed test with no way out, so say what
+  // happened and leave the exit open.
+  if (!active) {
+    return (
+      <Centered>
+        <div className="text-4xl mb-4">⚠️</div>
+        <h1 className="text-xl font-semibold mb-2">No question to show</h1>
+        <p className="text-sm text-gray-400 mb-2">
+          {problems.length === 0
+            ? "This test has no questions assigned to it, so there is nothing here to solve."
+            : "The question you were on is no longer part of this test."}
+        </p>
+        <p className="text-sm text-gray-400 mb-5">
+          This is not something you did — please tell whoever invited you. You can finish now
+          instead of waiting out the clock.
+        </p>
+        <div className="flex gap-3">
+          {problems.length > 0 && (
+            <button
+              onClick={() => setActiveIdx(0)}
+              className="flex-1 px-4 py-2.5 bg-gray-700 rounded font-medium hover:bg-gray-600"
+            >
+              Back to question 1
+            </button>
+          )}
+          <button
+            onClick={() => {
+              flushMetrics();
+              endTest("manual");
+            }}
+            disabled={ending}
+            className="flex-1 px-4 py-2.5 bg-red-600 rounded font-medium hover:bg-red-700 disabled:opacity-50"
+          >
+            {ending ? "Submitting…" : "Finish test"}
+          </button>
+        </div>
+      </Centered>
+    );
+  }
+
   const editor = editors[active.id] ?? { code: "", languageId: active.allowedLanguages[0] };
   const result = results[active.id];
+  const resultError = resultErrors[active.id] ?? null;
   const activeBusy = busy[active.id];
   const solvedCount = problems.filter((p) => p.solved).length;
 
@@ -630,7 +732,7 @@ export default function SessionPage() {
                 />
               </div>
 
-              <ResultsPanel result={result} busy={!!activeBusy} />
+              <ResultsPanel result={result} error={resultError} busy={!!activeBusy} />
             </div>
           </div>
         </div>
@@ -687,6 +789,31 @@ function emptyBuffer(): MetricBuffer {
   return { keystrokes: 0, charsTyped: 0, activeMs: 0, largestInsertion: 0, bursts: [] };
 }
 
+/**
+ * Candidate-facing copy for a grading poll that couldn't be completed. Nothing
+ * here is lost work: `finalizeSession` drains every still-running attempt when
+ * the test ends, so an unwatched submission is still scored.
+ */
+function gradingError(err: unknown): string {
+  if (err instanceof HttpError && (err.status === 401 || err.status === 403)) {
+    return "You were signed out while this was grading. Your submission is saved and will still be scored — reload this page to carry on.";
+  }
+  if (err instanceof HttpError) {
+    return `${errorMessage(err, "The judge could not be reached")}. Your submission is saved and will still be scored.`;
+  }
+  return "Lost connection while grading. Your submission is saved and will still be scored — check your connection and submit again if you want to see the result.";
+}
+
+/** Fold a window that failed to reach the server back into the live buffer. */
+function mergeBuffer(into: MetricBuffer, unsent: MetricBuffer) {
+  into.keystrokes += unsent.keystrokes;
+  into.charsTyped += unsent.charsTyped;
+  into.activeMs += unsent.activeMs;
+  into.largestInsertion = Math.max(into.largestInsertion, unsent.largestInsertion);
+  // The unsent bursts are the older ones, so they go in front.
+  into.bursts = [...unsent.bursts, ...into.bursts];
+}
+
 function Centered({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white px-4">
@@ -695,14 +822,34 @@ function Centered({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ResultsPanel({ result, busy }: { result: RunResult | null; busy: boolean }) {
-  if (!result && !busy) return null;
+function ResultsPanel({
+  result,
+  error,
+  busy,
+}: {
+  result: RunResult | null;
+  error: string | null;
+  busy: boolean;
+}) {
+  if (!result && !error && !busy) return null;
+
+  // Defended rather than assumed: anything that reaches this panel without its
+  // runs is a bug upstream, and it must not be allowed to throw and unmount the
+  // test screen out from under a candidate mid-exam.
+  const runs = result?.runs ?? [];
+  const passedCount = runs.filter((r) => isAccepted(r.statusId)).length;
 
   return (
     <div className="h-56 overflow-y-auto border-t border-gray-700 bg-gray-800 p-3 shrink-0">
-      {!result ? (
-        <p className="text-sm text-gray-400">Sending to the judge…</p>
-      ) : (
+      {error && (
+        <p className="text-sm text-yellow-300 bg-yellow-950/40 border border-yellow-900 rounded px-3 py-2 mb-3">
+          {error}
+        </p>
+      )}
+
+      {!result && !error && <p className="text-sm text-gray-400">Sending to the judge…</p>}
+
+      {result && (
         <>
           <div className="flex items-center gap-3 mb-3">
             <h3 className="font-semibold text-sm">
@@ -714,7 +861,10 @@ function ResultsPanel({ result, busy }: { result: RunResult | null; busy: boolea
                   result.score === result.maxScore ? "bg-green-600" : "bg-yellow-600"
                 }`}
               >
-                {result.score}/{result.maxScore} test cases passed
+                {/* score and maxScore are weighted point sums, so they cannot be read
+                    out as a number of cases: three cases weighted 1/2/1 give a
+                    maxScore of 4. The case count comes from the runs themselves. */}
+                {passedCount}/{runs.length} tests passed · {result.score}/{result.maxScore} pts
               </span>
             ) : (
               <span className="text-xs px-2 py-0.5 rounded bg-blue-600">
@@ -724,13 +874,13 @@ function ResultsPanel({ result, busy }: { result: RunResult | null; busy: boolea
           </div>
 
           <div className="space-y-1.5">
-            {result.runs.map((r) => (
+            {runs.map((r) => (
               <div
                 key={r.ordinal}
                 className={`text-xs px-2 py-1.5 rounded flex items-center justify-between ${
-                  r.statusId === 3
+                  isAccepted(r.statusId)
                     ? "bg-green-900/30 border border-green-800"
-                    : r.statusId && r.statusId > 3
+                    : isFailed(r.statusId)
                     ? "bg-red-900/30 border border-red-800"
                     : "bg-gray-700"
                 }`}
@@ -738,7 +888,7 @@ function ResultsPanel({ result, busy }: { result: RunResult | null; busy: boolea
                 <span>
                   Test #{r.ordinal}
                   <span className="text-gray-500 ml-1">({r.kind})</span> —{" "}
-                  {r.statusId === 3 ? "✓ " : r.statusId ? "✗ " : ""}
+                  {isAccepted(r.statusId) ? "✓ " : isFailed(r.statusId) ? "✗ " : ""}
                   {statusLabel(r.statusId)}
                 </span>
                 {r.timeS != null && (
@@ -751,8 +901,8 @@ function ResultsPanel({ result, busy }: { result: RunResult | null; busy: boolea
           </div>
 
           {/* Detail is shown for sample cases only — hidden cases stay hidden. */}
-          {result.runs
-            .filter((r) => r.kind === "sample" && r.statusId && r.statusId > 3)
+          {runs
+            .filter((r) => r.kind === "sample" && isFailed(r.statusId))
             .map((r) => (
               <div key={`d-${r.ordinal}`} className="mt-2 bg-gray-900 rounded p-2 text-xs space-y-2">
                 {r.compileOutput && (
@@ -767,7 +917,7 @@ function ResultsPanel({ result, busy }: { result: RunResult | null; busy: boolea
                     <pre className="whitespace-pre-wrap text-gray-300">{r.stderr}</pre>
                   </div>
                 )}
-                {r.statusId === 4 && (
+                {r.statusId === JUDGE0_WRONG_ANSWER && (
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <div className="text-yellow-400 mb-1">Your output</div>

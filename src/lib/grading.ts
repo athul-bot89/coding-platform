@@ -1,7 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import { createBatchSubmissions, getBatchSubmissions, isTerminal } from "@/lib/judge0";
+import { JUDGE0_ACCEPTED, JUDGE0_INTERNAL_ERROR, statusLabel } from "@/lib/judge0-status";
 
-export const JUDGE0_ACCEPTED = 3;
+// Verdict constants and labels live in lib/judge0-status so client components can
+// use them without pulling prisma into the browser bundle. Re-exported here for
+// server-side callers that still import them from this module.
+export { JUDGE0_ACCEPTED, statusLabel };
+
+/**
+ * How long a token gets the benefit of the doubt before an "unknown token" reply
+ * is treated as final. Judge0 can fail to recognise a token in the moment right
+ * after it hands it out, and failing a candidate's submission over that race is
+ * worse than waiting for one more poll.
+ */
+const DISOWNED_GRACE_MS = 30_000;
 
 type ProblemWithCases = {
   id: string;
@@ -107,9 +119,15 @@ export async function pollAndScoreAttempt(attemptId: string) {
   if (orphaned.length > 0) {
     await prisma.attemptRun.updateMany({
       where: { id: { in: orphaned.map((r) => r.id) } },
-      data: { statusId: 13, message: "Judge0 did not accept this submission", polledAt: new Date() },
+      data: {
+        statusId: JUDGE0_INTERNAL_ERROR,
+        message: "Judge0 did not accept this submission",
+        polledAt: new Date(),
+      },
     });
   }
+
+  const attemptAgeMs = Date.now() - attempt.createdAt.getTime();
 
   const pendingRuns = attempt.runs.filter(
     (r) => r.judge0Token && (!r.statusId || !isTerminal(r.statusId))
@@ -119,10 +137,37 @@ export async function pollAndScoreAttempt(attemptId: string) {
     try {
       const results = await getBatchSubmissions(pendingRuns.map((r) => r.judge0Token!));
 
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        const run = pendingRuns[i];
-        if (!run || !result?.status || !isTerminal(result.status.id)) continue;
+      // Each verdict belongs to the run holding its token, never to whichever
+      // run happens to sit at the same array index: Judge0 may answer short or
+      // out of order, and a shifted batch would record a passing case as failed.
+      // Driving the loop from the runs also means a result whose token matches
+      // nothing pending is simply ignored.
+      const byToken = new Map(results.map((r) => [r.token, r] as const));
+
+      for (const run of pendingRuns) {
+        const result = byToken.get(run.judge0Token!);
+
+        // A result with no status at all is Judge0 disowning the token — it has
+        // expired or been evicted, so no verdict is ever coming. Record it as an
+        // internal error the way an unaccepted submission is handled above,
+        // otherwise this run stays pending and the attempt never finalizes.
+        //
+        // Only once the attempt is old enough, though: a token can read back as
+        // unknown in the moment right after Judge0 hands it out, and burning a
+        // candidate's submission over that race is worse than one more poll.
+        if (result && !result.status && attemptAgeMs >= DISOWNED_GRACE_MS) {
+          await prisma.attemptRun.update({
+            where: { id: run.id },
+            data: {
+              statusId: JUDGE0_INTERNAL_ERROR,
+              message: "Judge0 no longer has a result for this submission",
+              polledAt: new Date(),
+            },
+          });
+          continue;
+        }
+
+        if (!result?.status || !isTerminal(result.status.id)) continue;
 
         await prisma.attemptRun.update({
           where: { id: run.id },
@@ -201,26 +246,4 @@ export function formatAttemptResponse(attempt: any, isAdmin: boolean) {
       };
     }),
   };
-}
-
-export const JUDGE0_STATUS_LABELS: Record<number, string> = {
-  1: "In Queue",
-  2: "Processing",
-  3: "Accepted",
-  4: "Wrong Answer",
-  5: "Time Limit Exceeded",
-  6: "Compilation Error",
-  7: "Runtime Error (SIGSEGV)",
-  8: "Runtime Error (SIGXFSZ)",
-  9: "Runtime Error (SIGFPE)",
-  10: "Runtime Error (SIGABRT)",
-  11: "Runtime Error (NZEC)",
-  12: "Runtime Error",
-  13: "Internal Error",
-  14: "Exec Format Error",
-};
-
-export function statusLabel(statusId: number | null): string {
-  if (!statusId) return "Pending";
-  return JUDGE0_STATUS_LABELS[statusId] || "Error";
 }

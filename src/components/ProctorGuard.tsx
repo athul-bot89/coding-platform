@@ -73,7 +73,7 @@ export function ProctorGuard({ onEvent, enabled = true }: ProctorGuardProps) {
     const handleBlur = () => report("window_blur");
 
     const handleFullscreenChange = () => {
-      if (!document.fullscreenElement) report("fullscreen_exit");
+      if (!isFullscreen()) report("fullscreen_exit");
     };
 
     const handleBeforePrint = () => report("print");
@@ -129,7 +129,9 @@ export function ProctorGuard({ onEvent, enabled = true }: ProctorGuardProps) {
     document.addEventListener("auxclick", handleAuxClick, cap);
     document.addEventListener("keydown", handleKeyDown, cap);
     document.addEventListener("visibilitychange", handleVisibility);
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    for (const evt of FULLSCREEN_CHANGE_EVENTS) {
+      document.addEventListener(evt, handleFullscreenChange);
+    }
     window.addEventListener("blur", handleBlur);
     window.addEventListener("beforeprint", handleBeforePrint);
 
@@ -153,7 +155,9 @@ export function ProctorGuard({ onEvent, enabled = true }: ProctorGuardProps) {
       document.removeEventListener("auxclick", handleAuxClick, cap);
       document.removeEventListener("keydown", handleKeyDown, cap);
       document.removeEventListener("visibilitychange", handleVisibility);
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      for (const evt of FULLSCREEN_CHANGE_EVENTS) {
+        document.removeEventListener(evt, handleFullscreenChange);
+      }
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("beforeprint", handleBeforePrint);
     };
@@ -161,6 +165,19 @@ export function ProctorGuard({ onEvent, enabled = true }: ProctorGuardProps) {
 
   return null;
 }
+
+/**
+ * Every browser that needs a prefix to *enter* fullscreen also prefixes the
+ * change event and the element property, so detection has to cover the same
+ * spread as `requestFullscreen` below. Listening only for the unprefixed event
+ * would leave a WebKit candidate genuinely in fullscreen while the gate believed
+ * they had left it — locked out of a test that is running fine.
+ */
+export const FULLSCREEN_CHANGE_EVENTS = [
+  "fullscreenchange",
+  "webkitfullscreenchange",
+  "msfullscreenchange",
+] as const;
 
 export async function requestFullscreen(): Promise<boolean> {
   const elem = document.documentElement as any;
@@ -176,5 +193,6 @@ export async function requestFullscreen(): Promise<boolean> {
 }
 
 export function isFullscreen(): boolean {
-  return !!document.fullscreenElement;
+  const d = document as any;
+  return !!(d.fullscreenElement || d.webkitFullscreenElement || d.msFullscreenElement);
 }

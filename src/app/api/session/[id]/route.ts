@@ -7,7 +7,7 @@ import { remainingMs } from "@/lib/assessment";
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireLiveSession(params.id);
   if (guard.error) return guard.error;
-  const { session } = guard;
+  const { session, problems: served } = guard;
 
   const assessment = session.invitation.assessment;
 
@@ -32,8 +32,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const draftByProblem = new Map(drafts.map((d) => [d.problemId, d]));
 
-  const problems = assessment.problems.map((ap, index) => {
-    const p = ap.problem;
+  const problems = served.map((sp, index) => {
+    const p = sp.problem;
     const starter: Record<string, string> = p.starterCode ? JSON.parse(p.starterCode) : {};
     const mine = attempts.filter((a) => a.problemId === p.id);
     const bestRatio = mine.reduce(
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       title: p.title,
       description: p.description,
       difficulty: p.difficulty,
-      points: ap.points,
+      points: sp.points,
       allowedLanguages: p.allowedLanguages.split(",").map(Number),
       timeLimitMs: p.timeLimitMs,
       memoryLimitKb: p.memoryLimitKb,

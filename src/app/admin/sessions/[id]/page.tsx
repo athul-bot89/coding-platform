@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { languageShortName } from "@/lib/languages";
 import { EVENT_LABELS } from "@/lib/proctor-config";
-import { statusLabel } from "@/lib/grading";
+import { isAccepted, isFailed, statusLabel } from "@/lib/judge0-status";
 
 interface Report {
   id: string;
@@ -97,6 +97,15 @@ export default function SessionReportPage() {
 
   const pct = report.maxScore > 0 ? Math.round((report.totalScore / report.maxScore) * 100) : 0;
   const countedEvents = report.events.filter((e) => e.counted);
+
+  // A candidate cannot work past their deadline, so anything above the allotted
+  // duration is bookkeeping rather than time spent: elapsedMs is measured to
+  // submittedAt, which for an abandoned test is only stamped whenever an admin
+  // next opens a page, and for a live one is measured to now. Show the window as
+  // full and let the state badge say it expired instead of claiming days of work.
+  const limitMs = report.durationMinutes * 60_000;
+  const overranLimit = report.elapsedMs > limitMs;
+  const shownElapsedMs = Math.min(Math.max(0, report.elapsedMs), limitMs);
   const emailMismatch =
     report.signedInAs &&
     report.signedInAs.toLowerCase() !== report.invitedEmail.toLowerCase();
@@ -117,7 +126,15 @@ export default function SessionReportPage() {
           </div>
           <div className="flex items-center gap-6">
             <Stat label="Score" value={`${report.totalScore}/${report.maxScore}`} accent={pct >= 60 ? "green" : pct >= 30 ? "yellow" : "red"} />
-            <Stat label="Time used" value={`${clock(report.elapsedMs)} / ${report.durationMinutes}:00`} />
+            <Stat
+              label={overranLimit ? "Time used (capped)" : "Time used"}
+              value={`${clock(shownElapsedMs)} / ${report.durationMinutes}:00`}
+              hint={
+                overranLimit
+                  ? "The test was never submitted from the candidate's side, so the whole window is shown. This is the time available, not time actively worked."
+                  : undefined
+              }
+            />
             <Stat
               label="Warnings"
               value={report.maxViolations > 0 ? `${report.violationCount}/${report.maxViolations}` : String(report.violationCount)}
@@ -151,8 +168,29 @@ export default function SessionReportPage() {
           <div className="space-y-3">
             {report.questions.map((q, i) => {
               const ratio = q.points > 0 ? q.earned / q.points : 0;
+
+              // Test cases are weighted, so an attempt's score/maxScore are points
+              // and never a case count. A real count only exists in the verdicts.
+              const runs = q.bestAttempt?.runs ?? [];
+              const casesPassed = runs.filter((r) => isAccepted(r.statusId)).length;
+
+              // burstChars is summed from a burst list the writer truncates to the
+              // last 100 and the report slices to the last 25, while burstCount
+              // keeps growing — so the two disagree and only burstCount and
+              // largestInsertion can be trusted to describe the whole session.
+              const burstsTruncated =
+                !!q.integrity && q.integrity.bursts.length < q.integrity.burstCount;
+              // A total is only worth stating when every burst is still in the list
+              // and there is more than one of them to add up.
+              const burstTotal =
+                q.integrity && !burstsTruncated && q.integrity.burstCount > 1
+                  ? q.integrity.burstChars
+                  : null;
               const flagged =
-                q.integrity && q.integrity.burstCount > 0 && q.integrity.burstChars > 80;
+                !!q.integrity &&
+                q.integrity.burstCount > 0 &&
+                (q.integrity.burstCount > 1 ||
+                  q.integrity.largestInsertion > q.integrity.threshold * 2);
 
               return (
                 <div key={q.problemId} className="bg-gray-800 border border-gray-700 rounded-xl p-4">
@@ -177,7 +215,8 @@ export default function SessionReportPage() {
                       </div>
                       {q.bestAttempt && (
                         <div className="text-xs text-gray-500">
-                          {q.bestAttempt.score}/{q.bestAttempt.maxScore} cases
+                          {runs.length > 0 && `${casesPassed}/${runs.length} cases · `}
+                          {q.bestAttempt.score}/{q.bestAttempt.maxScore} pts
                         </div>
                       )}
                     </div>
@@ -194,12 +233,13 @@ export default function SessionReportPage() {
                     >
                       {flagged ? (
                         <>
-                          <strong>Likely pasted.</strong> {q.integrity.burstChars} characters
-                          arrived in {q.integrity.burstCount} insertion
+                          <strong>Likely pasted.</strong> {q.integrity.burstCount} insertion
                           {q.integrity.burstCount === 1 ? "" : "s"} larger than{" "}
-                          {q.integrity.threshold} chars (largest:{" "}
-                          {q.integrity.largestInsertion}). Only {clock(q.integrity.activeMs)} of
-                          active typing across {q.integrity.keystrokes} edits.
+                          {q.integrity.threshold} chars, the largest {q.integrity.largestInsertion}{" "}
+                          chars
+                          {burstTotal !== null && ` totalling ${burstTotal} chars`}
+                          . Only {clock(q.integrity.activeMs)} of active typing across{" "}
+                          {q.integrity.keystrokes} edits.
                         </>
                       ) : (
                         <>
@@ -210,7 +250,9 @@ export default function SessionReportPage() {
                       )}
                       {q.integrity.bursts.length > 0 && (
                         <div className="mt-1.5 text-[11px] opacity-80">
-                          Bursts at{" "}
+                          {burstsTruncated
+                            ? `Most recent ${q.integrity.bursts.length} of ${q.integrity.burstCount} insertions: `
+                            : "Bursts at "}
                           {q.integrity.bursts
                             .map((b) => `${clock(b.atMs)} (${b.chars}c)`)
                             .join(", ")}
@@ -261,9 +303,11 @@ export default function SessionReportPage() {
                               <span
                                 key={r.ordinal}
                                 className={`text-[11px] px-2 py-0.5 rounded ${
-                                  r.statusId === 3
+                                  isAccepted(r.statusId)
                                     ? "bg-green-900/50 text-green-300"
-                                    : "bg-red-900/50 text-red-300"
+                                    : isFailed(r.statusId)
+                                    ? "bg-red-900/50 text-red-300"
+                                    : "bg-gray-700 text-gray-400"
                                 }`}
                                 title={`${r.kind} case`}
                               >
@@ -331,10 +375,13 @@ function Stat({
   label,
   value,
   accent,
+  hint,
 }: {
   label: string;
   value: string;
   accent?: "green" | "yellow" | "red";
+  /** Spelled out on hover when the number needs a caveat to be read correctly. */
+  hint?: string;
 }) {
   const color =
     accent === "green"
@@ -345,7 +392,7 @@ function Stat({
       ? "text-red-400"
       : "text-gray-200";
   return (
-    <div className="text-right">
+    <div className="text-right" title={hint}>
       <div className={`font-mono text-lg ${color}`}>{value}</div>
       <div className="text-xs text-gray-500">{label}</div>
     </div>

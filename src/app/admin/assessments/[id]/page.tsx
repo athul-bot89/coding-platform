@@ -4,6 +4,9 @@ import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { fetchJson, postJson, errorMessage, HttpError } from "@/lib/fetch-json";
+import { DEFAULT_MAX_VIOLATIONS } from "@/lib/proctor-config";
+
 interface Detail {
   id: string;
   title: string;
@@ -28,6 +31,17 @@ interface Detail {
   }[];
 }
 
+interface GenerateResult {
+  invitations: { id: string; candidateName: string; candidateEmail: string; url: string }[];
+  /**
+   * Addresses the server declined to invite a second time. One candidate gets
+   * one link per test, so pasted duplicates and anyone already invited come
+   * back here instead of becoming a second scored run. Older builds of the
+   * endpoint omit the field entirely.
+   */
+  skipped?: { email: string; reason: string }[];
+}
+
 export default function AssessmentDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -41,12 +55,13 @@ export default function AssessmentDetailPage() {
   const [settings, setSettings] = useState({
     title: "",
     durationMinutes: 90,
-    maxViolations: 3,
+    maxViolations: DEFAULT_MAX_VIOLATIONS,
     instructions: "",
   });
   const [candidateText, setCandidateText] = useState("");
   const [validDays, setValidDays] = useState(7);
   const [inviting, setInviting] = useState(false);
+  const [skipped, setSkipped] = useState<{ email: string; reason: string }[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,22 +69,44 @@ export default function AssessmentDetailPage() {
     else if (session && (session.user as any)?.role !== "admin") router.push("/problems");
   }, [status, session, router]);
 
+  // The admin role cached in the session cookie can outlive the server's view of
+  // it, so a 401 or 403 from any call here means this browser is no longer an
+  // admin — leave, rather than showing a permission error it cannot act on.
+  const reportError = useCallback(
+    (err: unknown, fallback: string) => {
+      if (err instanceof HttpError && (err.status === 401 || err.status === 403)) {
+        router.push(err.status === 401 ? "/" : "/problems");
+        return;
+      }
+      setError(errorMessage(err, fallback));
+    },
+    [router]
+  );
+
   const load = useCallback(async () => {
-    const res = await fetch(`/api/admin/assessments/${id}`);
-    if (!res.ok) {
-      setError("Could not load this test.");
-      return;
+    setError(null);
+    try {
+      const body = await fetchJson<Detail>(`/api/admin/assessments/${id}`);
+      // Everything below maps over these three lists, so a truncated response
+      // should leave a section empty rather than take the whole page down.
+      const problems = Array.isArray(body.problems) ? body.problems : [];
+      setData({
+        ...body,
+        problems,
+        availableProblems: Array.isArray(body.availableProblems) ? body.availableProblems : [],
+        invitations: Array.isArray(body.invitations) ? body.invitations : [],
+      });
+      setPicked(problems.map((p) => ({ problemId: p.problemId, points: p.points })));
+      setSettings({
+        title: body.title,
+        durationMinutes: body.durationMinutes,
+        maxViolations: body.maxViolations,
+        instructions: body.instructions ?? "",
+      });
+    } catch (err) {
+      reportError(err, "Could not load this test.");
     }
-    const body: Detail = await res.json();
-    setData(body);
-    setPicked(body.problems.map((p) => ({ problemId: p.problemId, points: p.points })));
-    setSettings({
-      title: body.title,
-      durationMinutes: body.durationMinutes,
-      maxViolations: body.maxViolations,
-      instructions: body.instructions ?? "",
-    });
-  }, [id]);
+  }, [id, reportError]);
 
   useEffect(() => {
     if (session && (session.user as any)?.role === "admin") load();
@@ -83,18 +120,33 @@ export default function AssessmentDetailPage() {
   const save = async () => {
     setSaving(true);
     setError(null);
-    const res = await fetch(`/api/admin/assessments/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...settings, problems: picked }),
-    });
-    const body = await res.json().catch(() => ({}));
-    setSaving(false);
-    if (!res.ok) {
-      setError(body.error || "Save failed.");
+    try {
+      await postJson(
+        `/api/admin/assessments/${id}`,
+        { ...settings, problems: picked },
+        { method: "PATCH" }
+      );
+    } catch (err) {
+      reportError(err, "Save failed.");
       return;
+    } finally {
+      setSaving(false);
     }
     flash("Saved");
+    load();
+  };
+
+  const setActive = async (isActive: boolean) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await postJson(`/api/admin/assessments/${id}`, { isActive }, { method: "PATCH" });
+    } catch (err) {
+      reportError(err, isActive ? "Could not open the test." : "Could not close the test.");
+      return;
+    } finally {
+      setSaving(false);
+    }
     load();
   };
 
@@ -119,6 +171,7 @@ export default function AssessmentDetailPage() {
   const generate = async () => {
     setInviting(true);
     setError(null);
+    setSkipped([]);
 
     // One candidate per line: "Name <email>", "Name, email", or just an email.
     const candidates = candidateText
@@ -139,31 +192,43 @@ export default function AssessmentDetailPage() {
       return;
     }
 
-    const res = await fetch(`/api/admin/assessments/${id}/invitations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ candidates, validDays }),
-    });
-    const body = await res.json().catch(() => ({}));
-    setInviting(false);
+    try {
+      const body = await postJson<GenerateResult>(`/api/admin/assessments/${id}/invitations`, {
+        candidates,
+        validDays,
+      });
 
-    if (!res.ok) {
-      setError(body.error || "Could not generate links.");
-      return;
+      const created = Array.isArray(body.invitations) ? body.invitations : [];
+      const notInvited = Array.isArray(body.skipped) ? body.skipped : [];
+      setSkipped(notInvited);
+
+      // Keep the pasted list when nothing was created, so the admin can correct
+      // it instead of retyping addresses that all turned out to be skipped.
+      if (created.length > 0) setCandidateText("");
+
+      flash(
+        created.length === 0
+          ? "No new links — every address was skipped"
+          : `${created.length} link(s) generated${
+              notInvited.length > 0 ? ` · ${notInvited.length} skipped` : ""
+            }`
+      );
+      load();
+    } catch (err) {
+      reportError(err, "Could not generate links.");
+    } finally {
+      setInviting(false);
     }
-    setCandidateText("");
-    flash(`${body.invitations.length} link(s) generated`);
-    load();
   };
 
   const revoke = async (invitationId: string) => {
-    const res = await fetch(
-      `/api/admin/assessments/${id}/invitations?invitationId=${invitationId}`,
-      { method: "DELETE" }
-    );
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(body.error || "Could not revoke.");
+    setError(null);
+    try {
+      await fetchJson(`/api/admin/assessments/${id}/invitations?invitationId=${invitationId}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      reportError(err, "Could not revoke that link.");
       return;
     }
     load();
@@ -270,15 +335,9 @@ export default function AssessmentDetailPage() {
             <label className="block">
               <span className="text-xs text-gray-400 block mb-1">Status</span>
               <button
-                onClick={async () => {
-                  await fetch(`/api/admin/assessments/${id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ isActive: !data.isActive }),
-                  });
-                  load();
-                }}
-                className={`w-full px-3 py-2 rounded text-sm ${
+                onClick={() => setActive(!data.isActive)}
+                disabled={saving}
+                className={`w-full px-3 py-2 rounded text-sm disabled:opacity-50 ${
                   data.isActive ? "bg-green-900 text-green-300" : "bg-gray-700 text-gray-300"
                 }`}
               >
@@ -396,8 +455,10 @@ export default function AssessmentDetailPage() {
                 ))}
             </div>
             <p className="text-xs text-gray-600 mt-3">
-              Changing questions affects tests started from now on. Candidates already in progress
-              keep the questions they were served.
+              Each session takes its own copy of this list — questions, order and point values — at
+              the moment the candidate starts. Anyone testing right now finishes on the exact
+              questions and points they were served, so nothing they have already earned can move.
+              These edits apply to sessions started after you save.
             </p>
           </div>
         </section>
@@ -406,8 +467,8 @@ export default function AssessmentDetailPage() {
         <section className="bg-gray-800 border border-gray-700 rounded-xl p-5">
           <h2 className="font-semibold mb-1">Candidate links</h2>
           <p className="text-xs text-gray-500 mb-4">
-            Each link works once, for one Google account. Copy it into your own email — nothing is
-            sent from here.
+            Each link works once, for one Google account, and each candidate gets a single link per
+            test. Copy it into your own email — nothing is sent from here.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
@@ -415,6 +476,10 @@ export default function AssessmentDetailPage() {
               <span className="text-xs text-gray-400 block mb-1">
                 One candidate per line — <code className="text-gray-500">Name &lt;email&gt;</code>,{" "}
                 <code className="text-gray-500">Name, email</code>, or just an email
+              </span>
+              <span className="text-xs text-gray-600 block mb-1">
+                One link per candidate: repeated addresses, and anyone who already has a link for
+                this test, are skipped and listed below.
               </span>
               <textarea
                 rows={3}
@@ -448,6 +513,32 @@ export default function AssessmentDetailPage() {
             <p className="text-xs text-yellow-400 mb-4">
               Add and save at least one question before generating links.
             </p>
+          )}
+
+          {skipped.length > 0 && (
+            <div className="mb-4 rounded border border-yellow-900 bg-yellow-950/30 px-3 py-2">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xs text-yellow-300 font-medium">
+                  {skipped.length} address{skipped.length === 1 ? "" : "es"} skipped — no new link
+                  was created. Any link {skipped.length === 1 ? "it" : "they"} already{" "}
+                  {skipped.length === 1 ? "has" : "have"} still works and is listed below.
+                </p>
+                <button
+                  onClick={() => setSkipped([])}
+                  className="text-xs text-yellow-600 hover:text-yellow-400 shrink-0"
+                >
+                  Dismiss
+                </button>
+              </div>
+              <ul className="mt-1.5 space-y-1">
+                {skipped.map((s) => (
+                  <li key={s.email} className="text-xs">
+                    <span className="font-mono text-yellow-200">{s.email}</span>
+                    <span className="text-yellow-200/60"> — {s.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {data.invitations.length > 0 && (

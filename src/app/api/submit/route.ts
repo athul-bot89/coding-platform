@@ -12,14 +12,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { problemId, languageId, sourceCode, kind } = await req.json();
+  const userId = (session.user as any).id as string;
 
-  if (!problemId || !languageId || !sourceCode) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  // This endpoint grades every hidden case and records nothing about how the
+  // code was written, so a candidate sitting a live test could aim it at one of
+  // their own questions and read pass/fail on each hidden case for free. While
+  // any test is in progress the only legal grading path is the session one.
+  const liveSessions = await prisma.testSession.count({
+    where: { userId, state: "in_progress" },
+  });
+  if (liveSessions > 0) {
+    return NextResponse.json(
+      { error: "You have an assessment in progress — submit it before practising" },
+      { status: 409 }
+    );
   }
 
-  const problem = await prisma.problem.findUnique({
-    where: { id: problemId },
+  const { problemId, languageId, sourceCode, kind } = await req.json().catch(() => ({}));
+
+  if (typeof problemId !== "string" || !problemId || typeof sourceCode !== "string") {
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  }
+  if (typeof languageId !== "number" || !Number.isInteger(languageId)) {
+    return NextResponse.json({ error: "Invalid language" }, { status: 400 });
+  }
+  if (!sourceCode.trim()) {
+    return NextResponse.json({ error: "Write some code first" }, { status: 400 });
+  }
+
+  // A retired problem reads as gone here: its test cases may no longer match the
+  // statement anyone can still see.
+  const problem = await prisma.problem.findFirst({
+    where: { id: problemId, isActive: true },
     include: { testCases: { orderBy: { ordinal: "asc" } } },
   });
 
@@ -34,7 +58,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const attemptId = await createAttempt({
-      userId: (session.user as any).id,
+      userId,
       problem,
       languageId,
       sourceCode,

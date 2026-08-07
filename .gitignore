@@ -30,6 +30,8 @@ prisma/*.db-journal
 # credentials / keys
 *.pem
 *.key
+secret.txt
+JUDGE0_API.md
 
 # testing
 /coverage

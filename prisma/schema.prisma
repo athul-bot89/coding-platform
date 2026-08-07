@@ -186,6 +186,10 @@ model TestSession {
   totalScore     Int            @default(0)
   maxScore       Int            @default(0)
   lastSeenAt     DateTime       @default(now())
+  // Time already given back for being offline, so the grace budget is capped
+  // across the whole session rather than per outage, and so a report can show
+  // how much a candidate was granted. Written only by applyOfflineCredit.
+  creditedMs     Int            @default(0)
   tabLock        String? // owning tab's random id — evicts duplicate tabs
   assessment     Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)

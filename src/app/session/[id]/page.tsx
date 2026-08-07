@@ -8,20 +8,38 @@ import { ProctorGuard } from "@/components/ProctorGuard";
 import { FullscreenGate } from "@/components/FullscreenGate";
 import { MultiDisplayGate } from "@/components/MultiDisplayGate";
 import { TestTimer } from "@/components/TestTimer";
+import { ConnectionBanner, SaveState, formatDuration } from "@/components/ConnectionBanner";
 import { markdownToHtml } from "@/lib/markdown";
 import { statusLabel, isAccepted, isFailed, JUDGE0_WRONG_ANSWER } from "@/lib/judge0-status";
 import { fetchJson, postJson, HttpError, errorMessage } from "@/lib/fetch-json";
+import {
+  clearDrafts,
+  dirtyDrafts,
+  isDraftDirty,
+  loadDrafts,
+  markSynced,
+  pruneDrafts,
+  rememberDraft,
+} from "@/lib/local-drafts";
 import {
   HEARTBEAT_MS,
   DRAFT_SAVE_MS,
   METRICS_FLUSH_MS,
   BLOCKED_MESSAGES,
   BLOCKED_FALLBACK,
+  OFFLINE_PROBE_MS,
+  POLL_OFFLINE_BUDGET_MS,
+  FINISH_ATTEMPTS,
+  FINISH_RETRY_MS,
+  isSilentEvent,
 } from "@/lib/proctor-config";
 
 /** Cadence of the grading poll, and how long it keeps asking before giving up. */
 const POLL_INTERVAL_MS = 1500;
 const POLL_BUDGET_MS = 90_000;
+
+/** How often the banner's "offline for 2m 10s" and the save indicator re-render. */
+const UI_TICK_MS = 1000;
 
 interface SessionProblem {
   index: number;
@@ -39,7 +57,7 @@ interface SessionProblem {
   submissionCount: number;
   solved: boolean;
   attempted: boolean;
-  draft: { code: string; languageId: number } | null;
+  draft: { code: string; languageId: number; savedAt: number } | null;
 }
 
 interface SessionData {
@@ -47,9 +65,20 @@ interface SessionData {
   title: string;
   candidateName: string;
   remainingMs: number;
+  startedAt: string;
+  serverNow: number;
   violationCount: number;
   maxViolations: number;
+  creditedMs: number;
   problems: SessionProblem[];
+}
+
+/** A proctor event that could not be sent when it happened. */
+interface PendingEvent {
+  event: string;
+  detail?: string;
+  /** Ms into the session, so the report puts it where it belongs. */
+  atMs: number;
 }
 
 interface RunResult {
@@ -98,6 +127,22 @@ export default function SessionPage() {
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [ending, setEnding] = useState(false);
 
+  // ---- Connection state ----
+  // `online` is what the last request actually did, not `navigator.onLine`, which
+  // is true on a captive portal and on a laptop connected to a router with no
+  // route out. A failed request is the only proof that matters.
+  const [online, setOnline] = useState(true);
+  const [offlineSince, setOfflineSince] = useState<number | null>(null);
+  const [unsyncedCount, setUnsyncedCount] = useState(0);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
+  const [localSaveFailed, setLocalSaveFailed] = useState(false);
+  const [queuedSubmits, setQueuedSubmits] = useState<string[]>([]);
+  const [creditedMs, setCreditedMs] = useState(0);
+  const [justCreditedMs, setJustCreditedMs] = useState<number | null>(null);
+  /** The countdown hit zero while offline; the server has not confirmed the end. */
+  const [awaitingServer, setAwaitingServer] = useState(false);
+  const [uiNow, setUiNow] = useState(() => Date.now());
+
   const tabId = useMemo(
     () => Math.random().toString(36).slice(2) + Date.now().toString(36),
     []
@@ -106,21 +151,75 @@ export default function SessionPage() {
   const startedAt = useRef(Date.now());
   const metrics = useRef<Record<string, MetricBuffer>>({});
   const lastEditAt = useRef<Record<string, number>>({});
-  const draftTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const pollTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const endingRef = useRef(false);
   const unmounted = useRef(false);
   // Heartbeat state, read from refs so the interval never has to be rebuilt.
   const sessionReady = useRef(false);
   const evictedRef = useRef(false);
+  const onlineRef = useRef(true);
+  const offlineSinceRef = useRef<number | null>(null);
+  /** Events that happened while the connection was down, oldest first. */
+  const pendingEvents = useRef<PendingEvent[]>([]);
+  /** problemId → the kind of run waiting to be sent once the connection is back. */
+  const queuedRef = useRef<Record<string, "run" | "submit">>({});
+  const flushingDrafts = useRef(false);
+  /** Latest `execute`, so a queued submission can be fired from a stable callback. */
+  const executeRef = useRef<((p: SessionProblem, kind: "run" | "submit") => void) | null>(null);
+  const problemsRef = useRef<SessionProblem[]>([]);
+  /** Editors as they stand, readable without making a state updater do the work. */
+  const editorsRef = useRef<Record<string, { code: string; languageId: number }>>({});
 
   const problems = data?.problems ?? [];
   const active = problems[activeIdx];
+  problemsRef.current = problems;
+  editorsRef.current = editors;
 
   const flash = useCallback((msg: string) => {
     setToast(msg);
     setTimeout(() => setToast((t) => (t === msg ? null : t)), 3200);
   }, []);
+
+  // ---- Connection ----------------------------------------------------------
+
+  /** Ms into the session, for stamping an event that is reported late. */
+  const sessionOffsetMs = useCallback(
+    () => Math.max(0, Date.now() - startedAt.current),
+    []
+  );
+
+  const noteOffline = useCallback(() => {
+    if (!onlineRef.current) return;
+    onlineRef.current = false;
+    const at = Date.now();
+    offlineSinceRef.current = at;
+    setOnline(false);
+    setOfflineSince(at);
+    setJustCreditedMs(null);
+    // Cannot be reported now, by definition. Queued with the moment it happened
+    // so the report shows the outage where it actually fell.
+    pendingEvents.current.push({ event: "connection_lost", atMs: sessionOffsetMs() });
+  }, [sessionOffsetMs]);
+
+  const noteOnline = useCallback(() => {
+    if (onlineRef.current) return;
+    onlineRef.current = true;
+    const downMs = offlineSinceRef.current ? Date.now() - offlineSinceRef.current : 0;
+    offlineSinceRef.current = null;
+    setOnline(true);
+    setOfflineSince(null);
+
+    // How long it lasted is only knowable now, so it is written onto the queued
+    // "lost" event rather than the "restored" one — the report reads better with
+    // the duration next to the disconnection it describes.
+    const lost = pendingEvents.current.find((e) => e.event === "connection_lost" && !e.detail);
+    if (lost) lost.detail = `offline for ${formatDuration(downMs)}`;
+
+    pendingEvents.current.push({ event: "connection_restored", atMs: sessionOffsetMs() });
+  }, [sessionOffsetMs]);
+
+  /** True for a failure that means "the request never got there". */
+  const isNetworkError = (err: unknown) => !(err instanceof HttpError);
 
   // The grading poll reschedules itself, so it has to be told when the screen is
   // gone; otherwise it keeps firing — and keeps setting state — long after
@@ -133,6 +232,112 @@ export default function SessionPage() {
     };
   }, []);
 
+  // ---- Draft persistence ----------------------------------------------------
+  //
+  // Two layers, because the network is not one of them. Every edit is mirrored to
+  // this device synchronously; a single flusher re-sends whatever the server has
+  // not acknowledged. An outage, a 500 or a sleeping laptop then costs a delay
+  // instead of code.
+
+  const refreshDirty = useCallback(() => {
+    setUnsyncedCount(dirtyDrafts(sessionId).length);
+  }, [sessionId]);
+
+  const mirrorDraft = useCallback(
+    (problemId: string, code: string, languageId: number) => {
+      if (!rememberDraft(sessionId, problemId, code, languageId)) setLocalSaveFailed(true);
+      refreshDirty();
+    },
+    [sessionId, refreshDirty]
+  );
+
+  const flushDrafts = useCallback(async () => {
+    // Serialised rather than skipped: `endTest` awaits this to get the last
+    // keystrokes onto the server, and a caller that gave up because the periodic
+    // pass happened to be mid-flight would be awaiting nothing. Bounded, so a
+    // hung request cannot hold up the end of a test.
+    for (let waited = 0; flushingDrafts.current && waited < 2_000; waited += 50) {
+      await sleep(50);
+    }
+    if (flushingDrafts.current) return;
+
+    const dirty = dirtyDrafts(sessionId);
+    if (dirty.length === 0) {
+      setUnsyncedCount(0);
+      return;
+    }
+
+    flushingDrafts.current = true;
+    try {
+      for (const { problemId, draft } of dirty) {
+        try {
+          await postJson(`/api/session/${sessionId}/draft`, {
+            problemId,
+            code: draft.code,
+            languageId: draft.languageId,
+          });
+          // Acknowledged against the `savedAt` that was actually sent, so an edit
+          // made while this was in flight stays dirty and goes in the next pass.
+          markSynced(sessionId, problemId, draft.savedAt);
+          setLastSyncedAt(Date.now());
+          noteOnline();
+        } catch (err) {
+          if (isNetworkError(err)) {
+            // Nothing is getting through; stop trying the rest and let the next
+            // pass pick all of them up together.
+            noteOffline();
+            break;
+          }
+          noteOnline();
+          // A 400 is a draft this server will never accept — a question pulled
+          // from the test mid-run. Retrying it forever would block every other
+          // problem's save behind it, and the local copy is untouched either way.
+          if (err instanceof HttpError && err.status === 400) {
+            markSynced(sessionId, problemId, draft.savedAt);
+          }
+          // The test is over; the heartbeat is already redirecting.
+          if (err instanceof HttpError && err.body?.ended) break;
+        }
+      }
+    } finally {
+      flushingDrafts.current = false;
+      refreshDirty();
+    }
+  }, [sessionId, noteOnline, noteOffline, refreshDirty]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!endingRef.current) flushDrafts();
+    }, DRAFT_SAVE_MS);
+    return () => clearInterval(id);
+  }, [flushDrafts]);
+
+  // Last-gasp save when the page goes away. `keepalive` is what lets these outlive
+  // the document — a plain fetch is cancelled as the tab closes, which is exactly
+  // the moment the unsent draft matters most.
+  useEffect(() => {
+    const flushNow = () => {
+      for (const { problemId, draft } of dirtyDrafts(sessionId)) {
+        fetch(`/api/session/${sessionId}/draft`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ problemId, code: draft.code, languageId: draft.languageId }),
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+    const onHidden = () => {
+      if (document.visibilityState === "hidden") flushNow();
+    };
+
+    window.addEventListener("pagehide", flushNow);
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      window.removeEventListener("pagehide", flushNow);
+      document.removeEventListener("visibilitychange", onHidden);
+    };
+  }, [sessionId]);
+
   // ---- Ending the test ------------------------------------------------------
 
   const endTest = useCallback(
@@ -141,24 +346,54 @@ export default function SessionPage() {
       endingRef.current = true;
       setEnding(true);
 
-      try {
-        if (reason !== "terminated") {
-          await fetch(`/api/session/${sessionId}/finish`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reason }),
-          });
+      // Whatever is still only on this device goes first, before the screen that
+      // holds it is torn down.
+      await flushDrafts();
+
+      let confirmed = reason === "terminated";
+
+      for (let attempt = 1; attempt <= FINISH_ATTEMPTS && !confirmed; attempt++) {
+        try {
+          await postJson(`/api/session/${sessionId}/finish`, { reason });
+          noteOnline();
+          confirmed = true;
+        } catch (err) {
+          if (!isNetworkError(err)) {
+            // The server answered — including "already finished". Either way it
+            // knows, so there is nothing to retry.
+            noteOnline();
+            confirmed = true;
+            break;
+          }
+          noteOffline();
+          if (attempt < FINISH_ATTEMPTS) await sleep(FINISH_RETRY_MS * attempt);
         }
-      } catch {
-        // Server-side sweep finalizes it regardless.
       }
+
+      // A candidate who pressed Finish while their connection was down has not
+      // finished anything — the server never heard it. Sending them to the
+      // completion screen would strand a test that is still running and still has
+      // time on it, so keep them in it and say why.
+      if (!confirmed && reason === "manual") {
+        endingRef.current = false;
+        setEnding(false);
+        setConfirmFinish(false);
+        flash(
+          "Couldn't reach the server to finish your test. Your work is saved — check your connection and try again."
+        );
+        return;
+      }
+
+      // The server has it all, so the local mirror has no job left. Left in place
+      // when the finish was never confirmed: it is the only copy of that code.
+      if (confirmed) clearDrafts(sessionId);
 
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
       router.replace(`/session/${sessionId}/complete?reason=${reason}`);
     },
-    [sessionId, router]
+    [sessionId, router, flushDrafts, flash, noteOnline, noteOffline]
   );
 
   // ---- Proctor events -------------------------------------------------------
@@ -166,13 +401,8 @@ export default function SessionPage() {
   const reportEvent = useCallback(
     async (event: string, detail?: string) => {
       try {
-        const res = await fetch(`/api/session/${sessionId}/event`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event, detail }),
-        });
-        if (!res.ok) return;
-        const body = await res.json();
+        const body = await postJson(`/api/session/${sessionId}/event`, { event, detail });
+        noteOnline();
 
         setViolations({ count: body.violationCount, max: body.maxViolations });
 
@@ -183,9 +413,11 @@ export default function SessionPage() {
         }
 
         // The server decides what counts; the message follows that, so a blocked
-        // action is never dressed up as a warning.
+        // action is never dressed up as a warning. Connection events are logged
+        // for the report and say nothing to the candidate — the banner is already
+        // telling them what they need to know.
         if (!body.counted) {
-          flash(BLOCKED_MESSAGES[event] ?? BLOCKED_FALLBACK);
+          if (!isSilentEvent(event)) flash(BLOCKED_MESSAGES[event] ?? BLOCKED_FALLBACK);
         } else if (event !== "fullscreen_exit") {
           // The fullscreen overlay already shows its own counter.
           flash(
@@ -194,12 +426,42 @@ export default function SessionPage() {
               : "This action was recorded."
           );
         }
-      } catch {
-        // Never let a logging failure interfere with the test.
+      } catch (err) {
+        // Never let a logging failure interfere with the test — but do not let an
+        // outage erase the log either. A violation that happened is a violation,
+        // so it is held with the moment it happened and sent on reconnect.
+        if (isNetworkError(err)) {
+          noteOffline();
+          pendingEvents.current.push({ event, detail, atMs: sessionOffsetMs() });
+        }
       }
     },
-    [sessionId, flash, endTest]
+    [sessionId, flash, endTest, noteOnline, noteOffline, sessionOffsetMs]
   );
+
+  /** Send what the outage held back, oldest first, stopping if it drops again. */
+  const flushPendingEvents = useCallback(async () => {
+    while (pendingEvents.current.length > 0 && onlineRef.current) {
+      const next = pendingEvents.current[0];
+      try {
+        const body = await postJson(`/api/session/${sessionId}/event`, next);
+        pendingEvents.current.shift();
+        setViolations({ count: body.violationCount, max: body.maxViolations });
+        if (body.terminated) {
+          flash("Too many violations — your test has been submitted.");
+          endTest("terminated");
+          return;
+        }
+      } catch (err) {
+        if (isNetworkError(err)) {
+          noteOffline();
+          return;
+        }
+        // The server rejected it. Dropping it is the only way not to spin here.
+        pendingEvents.current.shift();
+      }
+    }
+  }, [sessionId, flash, endTest, noteOffline]);
 
   // ---- Load ----------------------------------------------------------------
 
@@ -226,9 +488,39 @@ export default function SessionPage() {
         sessionReady.current = true;
         setViolations({ count: payload.violationCount, max: payload.maxViolations });
         setDeadline(Date.now() + payload.remainingMs);
+        setCreditedMs(payload.creditedMs ?? 0);
+
+        // Anchor the session's own timeline to this clock, so an event reported
+        // late lands where it happened even after a reload. Measured through the
+        // server's `now` rather than trusting this machine's absolute time.
+        const startedAtMs = new Date(payload.startedAt).getTime();
+        if (Number.isFinite(startedAtMs) && Number.isFinite(payload.serverNow)) {
+          startedAt.current = Date.now() - Math.max(0, payload.serverNow - startedAtMs);
+        }
+
+        // Forget mirrors for questions this session is no longer serving, so the
+        // flusher stops re-sending drafts the server now rejects.
+        pruneDrafts(
+          sessionId,
+          payload.problems.map((p) => p.id)
+        );
+        const local = loadDrafts(sessionId);
 
         const initial: Record<string, { code: string; languageId: number }> = {};
+        let restored = 0;
         for (const p of payload.problems) {
+          const mine = local[p.id];
+
+          // A local draft the server never acknowledged is, by construction, work
+          // typed while the connection was down — so it wins over whatever the
+          // server last managed to store. Only the two client-clock stamps are
+          // compared, so a skewed clock cannot make it look stale.
+          if (isDraftDirty(mine)) {
+            initial[p.id] = { code: mine.code, languageId: mine.languageId };
+            restored += 1;
+            continue;
+          }
+
           const langId = p.draft?.languageId ?? p.allowedLanguages[0];
           initial[p.id] = {
             languageId: langId,
@@ -236,6 +528,13 @@ export default function SessionPage() {
           };
         }
         setEditors(initial);
+        refreshDirty();
+
+        if (restored > 0) {
+          flash(
+            `Restored unsaved code for ${restored} question${restored === 1 ? "" : "s"} from this device.`
+          );
+        }
       } catch {
         if (!cancelled) setLoadError("Network error while loading the test.");
       }
@@ -244,27 +543,53 @@ export default function SessionPage() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, tabId, router]);
+  }, [sessionId, tabId, router, flash, refreshDirty]);
 
-  // ---- Heartbeat: clock re-sync + duplicate-tab eviction --------------------
+  // ---- Heartbeat: clock re-sync, reconnect detection, tab eviction ----------
 
   // Established once, on mount, and gated on refs rather than on `data`. Listing
   // `data` here restarted the interval on every submission — `execute` replaces
   // the payload to bump submissionCount — so a candidate submitting faster than
   // HEARTBEAT_MS never completed a tick and never beat at all: stale lastSeenAt,
   // no clock re-sync, and no duplicate-tab eviction.
+  //
+  // Self-scheduling rather than a fixed interval, because the cadence changes:
+  // while the connection is down this is also the thing that notices it come back,
+  // and every probe that fails is a probe that could have restored the candidate's
+  // time a few seconds sooner.
   useEffect(() => {
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     const beat = async () => {
       if (!sessionReady.current || evictedRef.current || endingRef.current) return;
 
       try {
         const body = await postJson(`/api/session/${sessionId}/heartbeat`, { tabId });
+        noteOnline();
 
-        // The server clock is the only one that matters.
+        // The server clock is the only one that matters — and it is the clock that
+        // has already had any offline time added back to it.
         setDeadline(Date.now() + body.remainingMs);
         setViolations({ count: body.violationCount, max: body.maxViolations });
+        setCreditedMs(body.creditedMs ?? 0);
+
+        if (body.grantedMs > 0) {
+          setJustCreditedMs(body.grantedMs);
+          flash(
+            `Back online — ${formatDuration(body.grantedMs)} of lost time was added back to your clock.`
+          );
+        }
+
+        setAwaitingServer(false);
+
+        // Nothing left, and the server is the one saying so. Ends the test for a
+        // tab whose own countdown was paused waiting for exactly this answer.
+        if (body.remainingMs <= 0) endTest("timeout");
       } catch (err) {
         if (err instanceof HttpError) {
+          // The server answered, so the connection is fine.
+          noteOnline();
           if (err.status === 409 && err.body?.evicted) {
             evictedRef.current = true;
             setEvicted(true);
@@ -276,29 +601,54 @@ export default function SessionPage() {
           }
           return;
         }
-        // Offline; the next beat re-syncs.
+        noteOffline();
       }
     };
 
-    const id = setInterval(beat, HEARTBEAT_MS);
+    const loop = async () => {
+      await beat();
+      if (stopped) return;
+      timer = setTimeout(loop, onlineRef.current ? HEARTBEAT_MS : OFFLINE_PROBE_MS);
+    };
+
+    timer = setTimeout(loop, HEARTBEAT_MS);
+
+    // The browser reporting an interface back is worth acting on straight away
+    // rather than waiting out a probe interval. It is only a hint — the beat is
+    // what decides — so nothing here marks the connection up.
+    const probeNow = () => {
+      if (stopped) return;
+      clearTimeout(timer);
+      loop();
+    };
+
+    window.addEventListener("online", probeNow);
+    window.addEventListener("offline", noteOffline);
+
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      window.removeEventListener("online", probeNow);
+      window.removeEventListener("offline", noteOffline);
+    };
+  }, [sessionId, tabId, router, flash, noteOnline, noteOffline, endTest]);
+
+  // Counts up the outage in the banner. Deliberately only while offline: a ticker
+  // running for the whole test would re-render the editor's parent every second
+  // for no one's benefit.
+  useEffect(() => {
+    if (online) return;
+    setUiNow(Date.now());
+    const id = setInterval(() => setUiNow(Date.now()), UI_TICK_MS);
     return () => clearInterval(id);
-  }, [sessionId, tabId, router]);
+  }, [online]);
 
-  // ---- Draft autosave -------------------------------------------------------
-
-  const saveDraft = useCallback(
-    (problemId: string, code: string, languageId: number) => {
-      clearTimeout(draftTimers.current[problemId]);
-      draftTimers.current[problemId] = setTimeout(() => {
-        fetch(`/api/session/${sessionId}/draft`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ problemId, code, languageId }),
-        }).catch(() => {});
-      }, DRAFT_SAVE_MS);
-    },
-    [sessionId]
-  );
+  // The "time was added back" banner is news, not status; it steps aside once read.
+  useEffect(() => {
+    if (justCreditedMs === null) return;
+    const id = setTimeout(() => setJustCreditedMs(null), 12_000);
+    return () => clearTimeout(id);
+  }, [justCreditedMs]);
 
   // ---- Typing metrics -------------------------------------------------------
 
@@ -314,12 +664,15 @@ export default function SessionPage() {
         // sent twice. If the POST never lands the unsent window is merged back:
         // an offline blip must not silently erase a window's paste evidence.
         metrics.current[id] = emptyBuffer();
-        postJson(`/api/session/${sessionId}/metrics`, { problemId: id, ...buf }).catch(() => {
-          mergeBuffer((metrics.current[id] ||= emptyBuffer()), buf);
-        });
+        postJson(`/api/session/${sessionId}/metrics`, { problemId: id, ...buf })
+          .then(() => noteOnline())
+          .catch((err) => {
+            if (isNetworkError(err)) noteOffline();
+            mergeBuffer((metrics.current[id] ||= emptyBuffer()), buf);
+          });
       }
     },
-    [sessionId]
+    [sessionId, noteOnline, noteOffline]
   );
 
   useEffect(() => {
@@ -348,29 +701,33 @@ export default function SessionPage() {
 
   // ---- Editing --------------------------------------------------------------
 
+  // The mirror runs here rather than inside the state updater it used to sit in:
+  // writing storage and setting the unsaved count are effects, and an updater has
+  // to stay a pure function of the previous state — React is free to call it twice.
   const updateCode = useCallback(
     (problemId: string, code: string) => {
-      setEditors((prev) => {
-        const cur = prev[problemId];
-        if (!cur || cur.code === code) return prev;
-        saveDraft(problemId, code, cur.languageId);
-        return { ...prev, [problemId]: { ...cur, code } };
-      });
+      const cur = editorsRef.current[problemId];
+      if (!cur || cur.code === code) return;
+
+      // Mirrored on this keystroke, not on a timer: the debounce belongs to the
+      // network save, and the local copy is what makes an outage survivable.
+      mirrorDraft(problemId, code, cur.languageId);
+      setEditors((prev) => ({ ...prev, [problemId]: { ...prev[problemId], code } }));
     },
-    [saveDraft]
+    [mirrorDraft]
   );
 
   const changeLanguage = useCallback(
     (problem: SessionProblem, languageId: number) => {
-      setEditors((prev) => {
-        const cur = prev[problem.id];
-        const untouched = !cur?.code?.trim() || cur.code === problem.starterCode[String(cur.languageId)];
-        const code = untouched ? problem.starterCode[String(languageId)] ?? "" : cur.code;
-        saveDraft(problem.id, code, languageId);
-        return { ...prev, [problem.id]: { code, languageId } };
-      });
+      const cur = editorsRef.current[problem.id];
+      const untouched =
+        !cur?.code?.trim() || cur.code === problem.starterCode[String(cur.languageId)];
+      const code = untouched ? problem.starterCode[String(languageId)] ?? "" : cur?.code ?? "";
+
+      mirrorDraft(problem.id, code, languageId);
+      setEditors((prev) => ({ ...prev, [problem.id]: { code, languageId } }));
     },
-    [saveDraft]
+    [mirrorDraft]
   );
 
   const switchQuestion = useCallback(
@@ -392,6 +749,11 @@ export default function SessionPage() {
         return;
       }
 
+      // Superseded by this run, whether it was queued a moment ago or is being
+      // fired by the reconnect flush right now.
+      delete queuedRef.current[problem.id];
+      setQueuedSubmits(Object.keys(queuedRef.current));
+
       setBusy((b) => ({ ...b, [problem.id]: kind }));
       setResults((r) => ({ ...r, [problem.id]: null }));
       setResultErrors((e) => ({ ...e, [problem.id]: null }));
@@ -402,31 +764,48 @@ export default function SessionPage() {
         setResultErrors((e) => ({ ...e, [problem.id]: message }));
       };
 
+      let body: { attemptId: string };
       try {
-        const res = await fetch(`/api/session/${sessionId}/submit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            problemId: problem.id,
-            languageId: editor.languageId,
-            sourceCode: editor.code,
-            kind,
-          }),
+        body = await postJson(`/api/session/${sessionId}/submit`, {
+          problemId: problem.id,
+          languageId: editor.languageId,
+          sourceCode: editor.code,
+          kind,
         });
-        const body = await res.json();
+        noteOnline();
+      } catch (err) {
+        setBusy((b) => ({ ...b, [problem.id]: null }));
 
-        if (!res.ok) {
-          if (body.ended && !endingRef.current) {
+        if (isNetworkError(err)) {
+          // The submission never left the building. Hold it and fire it the moment
+          // the connection is back, so a candidate who pressed Submit into a dead
+          // network does not have to notice, remember, and press it again.
+          noteOffline();
+          queuedRef.current[problem.id] = kind;
+          setQueuedSubmits(Object.keys(queuedRef.current));
+          setResultErrors((e) => ({
+            ...e,
+            [problem.id]:
+              "You're offline, so this hasn't been sent yet. It goes automatically the moment your connection is back — your code is saved either way.",
+          }));
+          return;
+        }
+
+        noteOnline();
+        if (err instanceof HttpError) {
+          if (err.body?.ended && !endingRef.current) {
             endingRef.current = true;
             router.replace(`/session/${sessionId}/complete?reason=timeout`);
             return;
           }
-          flash(body.error || "Submission failed.");
-          setBusy((b) => ({ ...b, [problem.id]: null }));
-          return;
+          flash(errorMessage(err, "Submission failed."));
         }
+        return;
+      }
 
-        const pollUntil = Date.now() + POLL_BUDGET_MS;
+      try {
+        let pollUntil = Date.now() + POLL_BUDGET_MS;
+        let offlineWaitedMs = 0;
 
         const poll = async () => {
           if (unmounted.current || endingRef.current) return;
@@ -438,6 +817,7 @@ export default function SessionPage() {
             // screen down the moment the panel tried to read `.runs` off it.
             const result = await fetchJson<RunResult>(`/api/attempts/${body.attemptId}`);
             if (unmounted.current || endingRef.current) return;
+            noteOnline();
 
             setResults((prev) => ({ ...prev, [problem.id]: result }));
 
@@ -479,6 +859,21 @@ export default function SessionPage() {
             }
           } catch (err) {
             if (unmounted.current || endingRef.current) return;
+
+            if (isNetworkError(err)) {
+              // The attempt is already on the server and is being graded whether
+              // this tab can see it or not. Losing the connection while watching is
+              // not a failed submission, so keep waiting — and do not spend the
+              // grading budget on time the network was down.
+              noteOffline();
+              if (offlineWaitedMs < POLL_OFFLINE_BUDGET_MS) {
+                offlineWaitedMs += OFFLINE_PROBE_MS;
+                pollUntil += OFFLINE_PROBE_MS;
+                pollTimers.current[problem.id] = setTimeout(poll, OFFLINE_PROBE_MS);
+                return;
+              }
+            }
+
             giveUp(gradingError(err));
           }
         };
@@ -490,11 +885,53 @@ export default function SessionPage() {
         flash("Network error.");
       }
     },
-    [busy, editors, sessionId, flash, flushMetrics, router]
+    [busy, editors, sessionId, flash, flushMetrics, router, noteOnline, noteOffline]
   );
+
+  executeRef.current = execute;
+
+  /**
+   * Fire everything that was waiting on the network. Reads the editor as it stands
+   * now rather than the copy that was queued — the candidate may have kept typing
+   * through the outage, and the newer code is the one they meant to submit.
+   */
+  const flushQueuedSubmits = useCallback(() => {
+    const queued = Object.entries(queuedRef.current);
+    if (queued.length === 0) return;
+    queuedRef.current = {};
+    setQueuedSubmits([]);
+
+    for (const [problemId, kind] of queued) {
+      const problem = problemsRef.current.find((p) => p.id === problemId);
+      if (problem) executeRef.current?.(problem, kind);
+    }
+  }, []);
+
+  // Reconnected: send what the outage held back, in the order that matters — the
+  // record of what happened, then the code, then anything mid-flight. Also runs on
+  // mount, which is what re-sends a draft left unsynced by a previous page load.
+  useEffect(() => {
+    if (!online) return;
+    flushPendingEvents();
+    flushDrafts();
+    flushMetrics();
+    flushQueuedSubmits();
+  }, [online, flushPendingEvents, flushDrafts, flushMetrics, flushQueuedSubmits]);
 
   const handleExpire = useCallback(() => {
     flushMetrics();
+
+    // A countdown reaching zero on a machine with no connection proves nothing.
+    // The server may be about to hand this exact time back as offline credit, so
+    // closing the test here would take away the minutes the credit is meant to
+    // restore. Wait for the server to say it is over; the probe loop is asking
+    // every few seconds, and it ends the test the moment the answer is no time
+    // left. Their code is already mirrored and queued either way.
+    if (!onlineRef.current) {
+      setAwaitingServer(true);
+      return;
+    }
+
     endTest("timeout");
   }, [flushMetrics, endTest]);
 
@@ -594,12 +1031,27 @@ export default function SessionPage() {
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
+              <SaveState
+                online={online}
+                unsyncedCount={unsyncedCount}
+                hasSaved={lastSyncedAt !== null}
+              />
               {violations.max > 0 && violations.count > 0 && (
                 <span className="text-xs px-2 py-1 rounded bg-red-950 text-red-300 border border-red-900">
                   ⚠ {violations.count}/{violations.max} warnings
                 </span>
               )}
-              <TestTimer deadline={deadline} onExpire={handleExpire} />
+              <div className="flex flex-col items-end gap-0.5">
+                <TestTimer deadline={deadline} onExpire={handleExpire} />
+                {creditedMs > 0 && (
+                  <span
+                    className="text-[10px] text-green-400"
+                    title="Time added back for connection problems"
+                  >
+                    +{formatDuration(creditedMs)} restored
+                  </span>
+                )}
+              </div>
               <button
                 onClick={() => setConfirmFinish(true)}
                 disabled={ending}
@@ -609,6 +1061,18 @@ export default function SessionPage() {
               </button>
             </div>
           </header>
+
+          <ConnectionBanner
+            online={online}
+            offlineSince={offlineSince}
+            now={uiNow}
+            unsyncedCount={unsyncedCount}
+            queuedCount={queuedSubmits.length}
+            creditedMs={creditedMs}
+            justCreditedMs={justCreditedMs}
+            awaitingServer={awaitingServer}
+            localSaveFailed={localSaveFailed}
+          />
 
           <div className="flex flex-1 overflow-hidden">
             {/* Question rail */}
@@ -763,6 +1227,13 @@ export default function SessionPage() {
                 {problems.filter((p) => !p.attempted).length} question(s) have no submission yet.
               </p>
             )}
+            {!online && (
+              <p className="text-sm text-yellow-400 bg-yellow-950/40 rounded px-3 py-2 mb-4">
+                You are offline, so this cannot be submitted yet. Your work is saved — wait for the
+                connection to come back and finish then. Nothing is lost in the meantime, and the
+                time this costs you is added back to your clock.
+              </p>
+            )}
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmFinish(false)}
@@ -792,6 +1263,10 @@ function emptyBuffer(): MetricBuffer {
   return { keystrokes: 0, charsTyped: 0, activeMs: 0, largestInsertion: 0, bursts: [] };
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Candidate-facing copy for a grading poll that couldn't be completed. Nothing
  * here is lost work: `finalizeSession` drains every still-running attempt when
@@ -804,7 +1279,9 @@ function gradingError(err: unknown): string {
   if (err instanceof HttpError) {
     return `${errorMessage(err, "The judge could not be reached")}. Your submission is saved and will still be scored.`;
   }
-  return "Lost connection while grading. Your submission is saved and will still be scored — check your connection and submit again if you want to see the result.";
+  // Reached only after the poll has already waited out POLL_OFFLINE_BUDGET_MS of
+  // outage, so this is a long one rather than a blip.
+  return "Still offline. Your submission reached the server and will be scored whether or not this screen sees the result — keep working, and it will appear once you reconnect.";
 }
 
 /** Fold a window that failed to reach the server back into the live buffer. */

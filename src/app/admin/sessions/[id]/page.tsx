@@ -19,6 +19,7 @@ interface Report {
   submittedAt: string | null;
   durationMinutes: number;
   elapsedMs: number;
+  creditedMs: number;
   violationCount: number;
   maxViolations: number;
   totalScore: number;
@@ -97,13 +98,17 @@ export default function SessionReportPage() {
 
   const pct = report.maxScore > 0 ? Math.round((report.totalScore / report.maxScore) * 100) : 0;
   const countedEvents = report.events.filter((e) => e.counted);
+  const outages = report.events.filter((e) => e.event === "connection_lost").length;
 
   // A candidate cannot work past their deadline, so anything above the allotted
   // duration is bookkeeping rather than time spent: elapsedMs is measured to
   // submittedAt, which for an abandoned test is only stamped whenever an admin
   // next opens a page, and for a live one is measured to now. Show the window as
   // full and let the state badge say it expired instead of claiming days of work.
-  const limitMs = report.durationMinutes * 60_000;
+  // Credited outage time is part of the window this candidate legitimately had, so
+  // it raises the ceiling rather than reading as time they should not have got.
+  const creditedMs = report.creditedMs ?? 0;
+  const limitMs = report.durationMinutes * 60_000 + creditedMs;
   const overranLimit = report.elapsedMs > limitMs;
   const shownElapsedMs = Math.min(Math.max(0, report.elapsedMs), limitMs);
   // The address is captured from the Google account at start, so a difference
@@ -131,13 +136,21 @@ export default function SessionReportPage() {
             <Stat label="Score" value={`${report.totalScore}/${report.maxScore}`} accent={pct >= 60 ? "green" : pct >= 30 ? "yellow" : "red"} />
             <Stat
               label={overranLimit ? "Time used (capped)" : "Time used"}
-              value={`${clock(shownElapsedMs)} / ${report.durationMinutes}:00`}
+              value={`${clock(shownElapsedMs)} / ${clock(limitMs)}`}
               hint={
                 overranLimit
                   ? "The test was never submitted from the candidate's side, so the whole window is shown. This is the time available, not time actively worked."
                   : undefined
               }
             />
+            {creditedMs > 0 && (
+              <Stat
+                label="Time restored"
+                value={`+${clock(creditedMs)}`}
+                accent="yellow"
+                hint="Added back for time this candidate spent offline. Their allotted window was extended by this much."
+              />
+            )}
             <Stat
               label="Warnings"
               value={report.maxViolations > 0 ? `${report.violationCount}/${report.maxViolations}` : String(report.violationCount)}
@@ -156,6 +169,20 @@ export default function SessionReportPage() {
             This test was <strong>ended automatically</strong> after{" "}
             {report.violationCount} proctoring warnings. The work below is what existed at that
             moment.
+          </div>
+        )}
+        {creditedMs > 0 && (
+          <div className="bg-yellow-950/40 border border-yellow-900 rounded-lg px-4 py-3 text-sm text-yellow-100">
+            This candidate lost their connection during the test, so{" "}
+            <strong>{clock(creditedMs)}</strong> was added back to their clock — their window was{" "}
+            {clock(limitMs)} rather than the standard {report.durationMinutes}:00.{" "}
+            {outages > 0 && (
+              <>
+                {outages} disconnection{outages === 1 ? "" : "s"}{" "}
+                {outages === 1 ? "is" : "are"} on the timeline below with how long each lasted.{" "}
+              </>
+            )}
+            No warning was recorded for any of it.
           </div>
         )}
         {emailChanged && (

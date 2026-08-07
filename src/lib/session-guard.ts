@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { finalizeSession, loadSessionProblems } from "@/lib/assessment";
+import { applyOfflineCredit, finalizeSession, loadSessionProblems } from "@/lib/assessment";
 
 /**
  * Resolve the caller's own in-progress TestSession, or an error response.
@@ -10,6 +10,11 @@ import { finalizeSession, loadSessionProblems } from "@/lib/assessment";
  * Every session endpoint goes through this so ownership, liveness and the clock
  * are checked in exactly one place. A session found past its `endsAt` is
  * finalized here rather than being allowed to accept one more request.
+ *
+ * Time lost to an outage is credited back *before* the clock is judged, so the
+ * first request a reconnecting candidate makes both restores their time and keeps
+ * their test open. `grantedMs` is what this call added, for the heartbeat to tell
+ * them about.
  *
  * The returned `problems` are the session's own frozen set, not the assessment's
  * current one — callers must go through it so that editing an assessment cannot
@@ -45,7 +50,9 @@ export async function requireLiveSession(sessionId: string) {
     };
   }
 
-  if (testSession.endsAt.getTime() <= Date.now()) {
+  const { session: live, grantedMs } = await applyOfflineCredit(testSession);
+
+  if (live.endsAt.getTime() <= Date.now()) {
     await finalizeSession(sessionId, "auto_submitted");
     return {
       error: NextResponse.json(
@@ -57,7 +64,7 @@ export async function requireLiveSession(sessionId: string) {
 
   const problems = await loadSessionProblems(sessionId);
 
-  return { session: testSession, userId, problems };
+  return { session: live, userId, problems, grantedMs };
 }
 
 export type LiveSession = NonNullable<Awaited<ReturnType<typeof requireLiveSession>>["session"]>;

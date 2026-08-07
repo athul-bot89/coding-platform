@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireLiveSession } from "@/lib/session-guard";
 import { finalizeSession } from "@/lib/assessment";
-import { VALID_EVENTS, isCountedEvent, truncateEventDetail } from "@/lib/proctor-config";
+import {
+  VALID_EVENTS,
+  isCountedEvent,
+  isSilentEvent,
+  truncateEventDetail,
+} from "@/lib/proctor-config";
 
 /**
  * Record a proctoring event. This endpoint — not the browser — decides whether
@@ -14,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (guard.error) return guard.error;
   const { session, userId } = guard;
 
-  const { event, detail } = await req.json().catch(() => ({ event: null }));
+  const { event, detail, atMs } = await req.json().catch(() => ({ event: null }));
 
   if (!event || !VALID_EVENTS.includes(event)) {
     return NextResponse.json({ error: "Invalid event" }, { status: 400 });
@@ -29,6 +34,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       event,
       detail: truncateEventDetail(detail),
       counted,
+      // Backdating is allowed for connection events only: they are reported once
+      // the network is back, so stamping them "now" would put a two-minute outage
+      // on the timeline at the moment it ended. Nothing that burns a warning can
+      // be backdated — a candidate must not be able to move their own tab switch.
+      ...(isSilentEvent(event) ? backdate(session.startedAt, atMs) : {}),
     },
   });
 
@@ -63,4 +73,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     counted: true,
     terminated,
   });
+}
+
+/**
+ * Turn a client-supplied "this happened N ms into the test" into a createdAt,
+ * clamped to the session's own window. An out-of-range or missing value falls
+ * back to now by contributing nothing.
+ */
+function backdate(startedAt: Date, atMs: unknown): { createdAt?: Date } {
+  if (typeof atMs !== "number" || !Number.isFinite(atMs) || atMs < 0) return {};
+  const at = startedAt.getTime() + atMs;
+  if (at > Date.now()) return {};
+  return { createdAt: new Date(at) };
 }

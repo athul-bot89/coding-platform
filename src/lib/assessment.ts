@@ -2,6 +2,11 @@ import crypto from "crypto";
 import type { Problem, TestCase } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { pollAndScoreAttempt } from "@/lib/grading";
+import {
+  HEARTBEAT_MS,
+  MAX_OFFLINE_CREDIT_MS,
+  OFFLINE_CREDIT_MIN_MS,
+} from "@/lib/proctor-config";
 
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
@@ -240,6 +245,105 @@ export async function summarizeSessions(
   return out;
 }
 
+// ---------------------------------------------------------------------------
+// Offline credit
+//
+// The clock is wall-clock and server-side, so an outage costs a candidate real
+// working time through no fault of their own. Time spent offline is given back by
+// pushing `endsAt` forward, up to a per-session cap — effectively a pause: a
+// candidate who drops off with ten minutes left comes back with ten minutes left.
+//
+// Bounded on purpose, in three ways. Nobody gets back more time than they had
+// when they dropped; a session with nothing left is owed nothing; and no session
+// is ever extended by more than MAX_OFFLINE_CREDIT_MS in total, however many
+// outages it takes. Every grant is recorded on the session and shown on the
+// report, because "my connection went" is also what abuse looks like.
+// ---------------------------------------------------------------------------
+
+/** Credit this session has not spent yet. */
+export function remainingCreditMs(s: { creditedMs: number }): number {
+  return Math.max(0, MAX_OFFLINE_CREDIT_MS - s.creditedMs);
+}
+
+interface CreditableSession {
+  id: string;
+  endsAt: Date;
+  lastSeenAt: Date;
+  creditedMs: number;
+}
+
+/**
+ * How much time this session is owed for being offline: what it takes to put the
+ * candidate back where the outage found them.
+ *
+ * Two guards do the work. The outage starts at the beat the candidate was expected
+ * to send rather than their last one, so the normal quiet between heartbeats is
+ * never credited. And it is only an outage at all if there was time left on their
+ * clock when it began — a tab closed at the buzzer is owed nothing, however long
+ * it stays closed, so waiting out the clock and coming back cannot buy a reprieve.
+ *
+ * Given both, the whole outage is returned: pushing `endsAt` forward by the time
+ * they were away leaves exactly the time they had. It cannot hand back more than
+ * that — someone who drops with twenty seconds left gets twenty seconds — and the
+ * per-session budget is the ceiling on all of it.
+ */
+export function pendingOfflineCreditMs(s: CreditableSession, now = Date.now()): number {
+  if (now - s.lastSeenAt.getTime() < OFFLINE_CREDIT_MIN_MS) return 0;
+
+  const outageStart = s.lastSeenAt.getTime() + HEARTBEAT_MS;
+  if (s.endsAt.getTime() <= outageStart) return 0;
+
+  return Math.min(now - outageStart, remainingCreditMs(s));
+}
+
+/**
+ * Give back the time this session spent offline, and return the session as it now
+ * stands. A no-op when nothing is owed, which is the common case.
+ *
+ * Called from `requireLiveSession`, so any request the candidate makes on
+ * reconnecting collects the credit — including one that arrives after their
+ * original deadline, which is the case that matters most: an outage that spanned
+ * the buzzer must not end a test they were entitled to finish.
+ */
+export async function applyOfflineCredit<T extends CreditableSession>(
+  session: T,
+  now = Date.now()
+): Promise<{ session: T; grantedMs: number }> {
+  const grant = pendingOfflineCreditMs(session, now);
+  if (grant <= 0) return { session, grantedMs: 0 };
+
+  // Claim the grant on the `lastSeenAt` it was computed from. Two requests
+  // arriving together after the same outage would otherwise each extend the
+  // deadline by the full gap, doubling the credit.
+  const claimed = await prisma.testSession.updateMany({
+    where: { id: session.id, state: "in_progress", lastSeenAt: session.lastSeenAt },
+    data: {
+      endsAt: new Date(session.endsAt.getTime() + grant),
+      creditedMs: session.creditedMs + grant,
+      lastSeenAt: new Date(now),
+    },
+  });
+
+  if (claimed.count === 0) {
+    // Someone else got there first; take their numbers rather than this stale copy.
+    const fresh = await prisma.testSession.findUnique({
+      where: { id: session.id },
+      select: { endsAt: true, creditedMs: true, lastSeenAt: true },
+    });
+    return { session: fresh ? ({ ...session, ...fresh } as T) : session, grantedMs: 0 };
+  }
+
+  return {
+    session: {
+      ...session,
+      endsAt: new Date(session.endsAt.getTime() + grant),
+      creditedMs: session.creditedMs + grant,
+      lastSeenAt: new Date(now),
+    } as T,
+    grantedMs: grant,
+  };
+}
+
 /** End a session for good: drain any in-flight grading and freeze the score. */
 export async function finalizeSession(sessionId: string, state: SessionEndState) {
   const existing = await prisma.testSession.findUnique({ where: { id: sessionId } });
@@ -296,16 +400,29 @@ const SWEEP_BATCH = 10;
  * would need no cap at all.
  */
 export async function sweepExpiredSessions(limit = SWEEP_BATCH) {
+  const now = Date.now();
+
+  // Over-fetched because some rows are skipped below: a session being held for
+  // its offline credit must not occupy one of the batch's slots and starve the
+  // sessions behind it.
   const expired = await prisma.testSession.findMany({
-    where: { state: "in_progress", endsAt: { lt: new Date() } },
+    where: { state: "in_progress", endsAt: { lt: new Date(now) } },
     orderBy: { endsAt: "asc" },
-    take: limit,
-    select: { id: true },
+    take: limit * 3,
+    select: { id: true, endsAt: true, lastSeenAt: true, creditedMs: true },
   });
+
+  // A candidate who dropped off before their buzzer is owed that time back the
+  // moment they reconnect, so finalizing them as the clock passes would end a
+  // test they can still resume. Held only until the credit they are owed has
+  // itself run out — a tab closed while online is owed nothing and goes now.
+  const ripe = expired
+    .filter((s) => s.endsAt.getTime() + pendingOfflineCreditMs(s, now) <= now)
+    .slice(0, limit);
 
   // Best effort; the next sweep retries whatever failed or did not fit.
   const settled = await Promise.allSettled(
-    expired.map((s) => finalizeSession(s.id, "auto_submitted"))
+    ripe.map((s) => finalizeSession(s.id, "auto_submitted"))
   );
   return settled.filter((r) => r.status === "fulfilled").length;
 }
@@ -342,6 +459,8 @@ export interface LeaderboardRow {
   startedAt: Date;
   submittedAt: Date | null;
   elapsedMs: number;
+  /** Time added back for being offline, so a long run has an explanation. */
+  creditedMs: number;
   /** Still sitting the test — the score below them is a running total. */
   live: boolean;
 }
@@ -407,6 +526,7 @@ export async function buildLeaderboard(assessmentId: string) {
       startedAt: s.startedAt,
       submittedAt: s.submittedAt,
       elapsedMs: sessionElapsedMs(s, now),
+      creditedMs: s.creditedMs,
       live: s.state === "in_progress",
     };
   });
@@ -414,15 +534,22 @@ export async function buildLeaderboard(assessmentId: string) {
   // Score first, then whoever got there faster. Candidates still working are
   // ranked alongside everyone else on their running total, and flagged `live` so
   // the table can say that their position is not final.
-  rows.sort((a, b) => b.totalScore - a.totalScore || a.elapsedMs - b.elapsedMs);
+  //
+  // The speed comparison discounts time credited back for an outage: a candidate
+  // sat waiting for their connection was not working, and the whole point of
+  // giving that time back is that losing it costs them nothing. `elapsedMs` is
+  // still what the table shows — that is the window they occupied.
+  const worked = (r: { elapsedMs: number; creditedMs: number }) =>
+    Math.max(0, r.elapsedMs - r.creditedMs);
+
+  rows.sort((a, b) => b.totalScore - a.totalScore || worked(a) - worked(b));
 
   // Equal score and equal time is a genuine tie, so it shares a rank; the next
   // candidate down then skips to their true position (1, 2, 2, 4).
   const ranked: LeaderboardRow[] = [];
   rows.forEach((r, i) => {
     const prev = ranked[i - 1];
-    const tied =
-      prev && prev.totalScore === r.totalScore && prev.elapsedMs === r.elapsedMs;
+    const tied = prev && prev.totalScore === r.totalScore && worked(prev) === worked(r);
     ranked.push({ ...r, rank: tied ? prev.rank : i + 1 });
   });
 

@@ -123,6 +123,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     submittedAt: session.submittedAt,
     durationMinutes: session.assessment.durationMinutes,
     elapsedMs: sessionElapsedMs(session),
+    // Time added back for being offline. Reported so a candidate whose test ran
+    // nine minutes long has that explained rather than looking like a clock bug —
+    // and so an implausible amount of "connection trouble" is visible.
+    creditedMs: session.creditedMs,
     violationCount: session.violationCount,
     maxViolations: session.assessment.maxViolations,
     totalScore,

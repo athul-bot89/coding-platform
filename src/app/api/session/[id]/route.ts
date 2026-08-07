@@ -61,7 +61,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       submissionCount: mine.length,
       solved: bestRatio >= 1,
       attempted: mine.length > 0 || !!draft,
-      draft: draft ? { code: draft.code, languageId: draft.languageId } : null,
+      // `savedAt` lets the client see how its own local mirror compares with what
+      // actually reached the server, so code typed during an outage is restored
+      // rather than being overwritten by an older server-side copy.
+      draft: draft
+        ? {
+            code: draft.code,
+            languageId: draft.languageId,
+            savedAt: draft.updatedAt.getTime(),
+          }
+        : null,
     };
   });
 
@@ -71,9 +80,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     candidateName: session.candidateName,
     remainingMs: remainingMs(session.endsAt),
     endsAt: session.endsAt,
+    // `startedAt` with `serverNow` lets the client place an event on the session's
+    // own timeline without trusting its own clock's absolute value — needed for
+    // anything reported late, such as an outage that is only logged once it ends.
+    startedAt: session.startedAt,
     serverNow: Date.now(),
     violationCount: session.violationCount,
     maxViolations: assessment.maxViolations,
+    // Already-credited outage time, so a candidate who reloads still sees that
+    // their clock was extended rather than thinking it drifted.
+    creditedMs: session.creditedMs,
     problems,
   });
 }

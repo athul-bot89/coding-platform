@@ -33,6 +33,14 @@ export function TestTimer({ deadline, onExpire }: Props) {
     return () => clearInterval(id);
   }, [deadline]);
 
+  // A new deadline re-arms the expiry. It has to: `onExpire` can decline to end
+  // the test — it does exactly that when the connection is down and the server may
+  // still be about to credit the outage back — and a latch that only ever fires
+  // once would then leave the test with no expiry at all.
+  useEffect(() => {
+    setFired(false);
+  }, [deadline]);
+
   useEffect(() => {
     if (remaining <= 0 && !fired) {
       setFired(true);

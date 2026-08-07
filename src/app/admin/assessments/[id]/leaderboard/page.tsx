@@ -29,6 +29,7 @@ interface Row {
   startedAt: string;
   submittedAt: string | null;
   elapsedMs: number;
+  creditedMs: number;
   live: boolean;
 }
 
@@ -147,6 +148,7 @@ export default function LeaderboardPage() {
       "Submissions",
       "Warnings",
       "Time taken",
+      "Time restored (offline)",
       "Status",
       "Started at",
       "Submitted at",
@@ -175,6 +177,7 @@ export default function LeaderboardPage() {
           r.submissionCount,
           r.violationCount,
           clock(r.elapsedMs),
+          r.creditedMs > 0 ? clock(r.creditedMs) : "",
           r.live ? "in progress" : r.state,
           new Date(r.startedAt).toISOString(),
           r.submittedAt ? new Date(r.submittedAt).toISOString() : "",
@@ -376,6 +379,16 @@ export default function LeaderboardPage() {
                       })}
                       <td className="py-3 px-3 text-right font-mono text-xs text-gray-400 whitespace-nowrap">
                         {clock(r.elapsedMs)}
+                        {r.creditedMs > 0 && (
+                          <div
+                            className="text-[10px] text-yellow-500"
+                            title={`${clock(
+                              r.creditedMs
+                            )} was added back to this candidate's clock for time spent offline`}
+                          >
+                            +{clock(r.creditedMs)} offline
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-2 text-center">
                         <span
@@ -408,7 +421,9 @@ export default function LeaderboardPage() {
         <p className="text-xs text-gray-600">
           Ranked by score, then by who finished faster. Each question counts a candidate&apos;s best
           submission, so retrying never costs them points. Candidates still working are ranked on
-          their running total and marked <em>in progress</em> — their position is not final.
+          their running total and marked <em>in progress</em> — their position is not final. Time a
+          candidate lost to a connection outage is added back to their clock and discounted from the
+          speed comparison, so a dropped connection cannot cost them a place.
         </p>
       </main>
     </div>

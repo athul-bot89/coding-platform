@@ -20,7 +20,19 @@ export const LOGGED_ONLY = [
   "print",
 ] as const;
 
-export const VALID_EVENTS: string[] = [...COUNTED_EVENTS, ...LOGGED_ONLY];
+/**
+ * Recorded for the report but never shown to the candidate as a blocked action —
+ * these describe the connection, not something they did. They are also the only
+ * events allowed to be backdated, since they are reported once the connection is
+ * back rather than when they happened.
+ */
+export const SILENT_EVENTS = ["connection_lost", "connection_restored"] as const;
+
+export const VALID_EVENTS: string[] = [...COUNTED_EVENTS, ...LOGGED_ONLY, ...SILENT_EVENTS];
+
+export function isSilentEvent(event: string): boolean {
+  return (SILENT_EVENTS as readonly string[]).includes(event);
+}
 
 /**
  * Counted violations a candidate gets before the test is auto-submitted —
@@ -68,8 +80,43 @@ export const HEARTBEAT_MS = 10_000;
  */
 export const ONLINE_GRACE_MS = HEARTBEAT_MS * 3;
 
-/** Debounce before an edited draft is persisted. */
+/** Debounce before an edited draft is persisted, and the retry cadence after that. */
 export const DRAFT_SAVE_MS = 2_000;
+
+// ---------------------------------------------------------------------------
+// Losing the connection
+//
+// A candidate cannot be made to pay for their network. Code is mirrored on their
+// own machine and re-sent until it lands, and the time an outage ate is given
+// back to their clock — bounded, because pulling the network is otherwise the
+// cheapest way to buy thinking time.
+// ---------------------------------------------------------------------------
+
+/**
+ * A gap between heartbeats shorter than this is jitter or one slow request, not
+ * an outage. Two missed beats is the floor for crediting time back.
+ */
+export const OFFLINE_CREDIT_MIN_MS = HEARTBEAT_MS * 2;
+
+/**
+ * The most time one session can ever be credited, however many outages it takes.
+ * Spent across the whole test and surfaced on the report, so a candidate who
+ * "loses connection" for nine minutes is visible to whoever reviews them.
+ */
+export const MAX_OFFLINE_CREDIT_MS = 10 * 60_000;
+
+/** How often the client retries while it believes it is offline. */
+export const OFFLINE_PROBE_MS = 3_000;
+
+/** Tries for a request that must not be dropped, and the gap between them. */
+export const FINISH_ATTEMPTS = 3;
+export const FINISH_RETRY_MS = 1_200;
+
+/**
+ * How long the grading poll keeps waiting through an outage before it stops and
+ * tells the candidate their submission will be scored without them watching.
+ */
+export const POLL_OFFLINE_BUDGET_MS = 5 * 60_000;
 
 /** How often buffered typing metrics are flushed. */
 export const METRICS_FLUSH_MS = 15_000;
@@ -107,4 +154,6 @@ export const EVENT_LABELS: Record<string, string> = {
   drop: "Drag-drop blocked",
   print: "Print blocked",
   multi_display: "Multiple displays detected",
+  connection_lost: "Connection lost",
+  connection_restored: "Reconnected",
 };

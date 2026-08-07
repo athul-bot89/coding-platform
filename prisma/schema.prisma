@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String?       @unique
+  emailVerified DateTime?
+  image         String?
+  role          String        @default("user") // "user" or "admin"
+  accounts      Account[]
+  sessions      Session[]
+  attempts      Attempt[]
+  testSessions  TestSession[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Problem {
+  id                String     @id @default(cuid())
+  title             String
+  slug              String     @unique
+  description       String     // markdown
+  difficulty        String     @default("medium") // easy, medium, hard
+  allowedLanguages  String     // comma-separated language IDs
+  timeLimitMs       Int        @default(5000)
+  memoryLimitKb     Int        @default(128000)
+  starterCode       String?    // JSON map: {languageId: code}
+  isActive          Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+  testCases         TestCase[]
+  attempts          Attempt[]
+  assessments       AssessmentProblem[]
+}
+
+model TestCase {
+  id             String       @id @default(cuid())
+  problemId      String
+  ordinal        Int
+  kind           String       @default("hidden") // "sample" or "hidden"
+  stdin          String
+  expectedOutput String
+  weight         Int          @default(1)
+  problem        Problem      @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  attemptRuns    AttemptRun[]
+}
+
+model Attempt {
+  id         String       @id @default(cuid())
+  userId     String
+  problemId  String
+  sessionId  String?      // set when submitted inside a proctored TestSession
+  kind       String       @default("submit") // "submit" (all cases) or "run" (samples only)
+  languageId Int
+  sourceCode String
+  state      String       @default("queued") // queued, running, done, error
+  score      Int          @default(0)
+  maxScore   Int          @default(0)
+  createdAt  DateTime     @default(now())
+  finishedAt DateTime?
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem    Problem      @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  session    TestSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  runs       AttemptRun[]
+
+  @@index([sessionId, problemId])
+}
+
+model AttemptRun {
+  id            String    @id @default(cuid())
+  attemptId     String
+  testCaseId    String
+  judge0Token   String?   @unique
+  statusId      Int?
+  exitCode      Int?
+  stdout        String?
+  stderr        String?
+  compileOutput String?
+  message       String?
+  timeS         Float?
+  memoryKb      Int?
+  polledAt      DateTime?
+  attempt       Attempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  testCase      TestCase  @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+}
+
+// Anti-cheat event logging
+model ProctorEvent {
+  id        String       @id @default(cuid())
+  userId    String
+  attemptId String?
+  sessionId String?      // set when raised inside a proctored TestSession
+  event     String       // "tab_switch", "copy", "paste", "fullscreen_exit", "right_click"
+  detail    String?
+  counted   Boolean      @default(false) // did this increment violationCount?
+  createdAt DateTime     @default(now())
+  session   TestSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Proctored assessments: Assessment -> Invitation (link) -> TestSession (run)
+// ---------------------------------------------------------------------------
+
+model Assessment {
+  id              String              @id @default(cuid())
+  title           String
+  instructions    String? // markdown, shown on the rules screen
+  durationMinutes Int                 @default(90)
+  maxViolations   Int                 @default(3) // 0 disables auto-submit
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  problems        AssessmentProblem[]
+  invitations     Invitation[]
+}
+
+model AssessmentProblem {
+  assessmentId String
+  problemId    String
+  ordinal      Int
+  points       Int        @default(100)
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  problem      Problem    @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@id([assessmentId, problemId])
+}
+
+model Invitation {
+  id             String       @id @default(cuid())
+  assessmentId   String
+  token          String       @unique // random hex, appears in the invite URL
+  candidateName  String
+  candidateEmail String // the Google account used to sign in must match this
+  status         String       @default("pending") // pending|started|submitted|expired|terminated
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  assessment     Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  session        TestSession?
+
+  @@index([candidateEmail])
+}
+
+model TestSession {
+  id             String         @id @default(cuid())
+  invitationId   String         @unique
+  userId         String
+  startedAt      DateTime       @default(now())
+  endsAt         DateTime // frozen server-side at start — the only clock that counts
+  submittedAt    DateTime?
+  state          String         @default("in_progress") // in_progress|submitted|auto_submitted|terminated
+  violationCount Int            @default(0)
+  totalScore     Int            @default(0)
+  maxScore       Int            @default(0)
+  lastSeenAt     DateTime       @default(now())
+  tabLock        String? // owning tab's random id — evicts duplicate tabs
+  invitation     Invitation     @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts       Attempt[]
+  events         ProctorEvent[]
+  drafts         SessionDraft[]
+  metrics        TypingMetric[]
+}
+
+// Autosaved editor content — survives refresh, crash, and question switching.
+model SessionDraft {
+  sessionId  String
+  problemId  String
+  languageId Int
+  code       String
+  updatedAt  DateTime    @updatedAt
+  session    TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, problemId])
+}
+
+// Code-integrity signals: catches content that arrived faster than it could be typed.
+model TypingMetric {
+  sessionId        String
+  problemId        String
+  keystrokes       Int         @default(0)
+  charsTyped       Int         @default(0)
+  largestInsertion Int         @default(0)
+  burstCount       Int         @default(0)
+  bursts           String? // JSON [{atMs, chars}]
+  activeMs         Int         @default(0)
+  updatedAt        DateTime    @updatedAt
+  session          TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, problemId])
+}

@@ -1,6 +1,6 @@
 import { isTerminalStatus } from "@/lib/judge0-status";
 
-const JUDGE0_URL = process.env.JUDGE0_URL || "http://65.0.29.135:2358";
+const JUDGE0_URL = process.env.JUDGE0_URL || "";
 const JUDGE0_TOKEN = process.env.JUDGE0_TOKEN || "";
 
 const enc = (s: string) => Buffer.from(s, "utf8").toString("base64");

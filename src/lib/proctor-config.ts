@@ -2,7 +2,7 @@
 // can be adjusted without touching detection or enforcement code.
 
 /** Events that increment TestSession.violationCount and can auto-submit a test. */
-export const COUNTED_EVENTS = ["fullscreen_exit", "tab_switch", "window_blur"] as const;
+export const COUNTED_EVENTS = ["fullscreen_exit", "tab_switch", "window_blur", "multi_display"] as const;
 
 /**
  * Events that are blocked and recorded but never burn a warning.
@@ -18,7 +18,6 @@ export const LOGGED_ONLY = [
   "devtools",
   "drop",
   "print",
-  "multi_display",
 ] as const;
 
 export const VALID_EVENTS: string[] = [...COUNTED_EVENTS, ...LOGGED_ONLY];

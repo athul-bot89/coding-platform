@@ -6,6 +6,7 @@ import { CodeEditor, EditChange } from "@/components/CodeEditor";
 import { getMonacoLanguage, languageName } from "@/lib/languages";
 import { ProctorGuard } from "@/components/ProctorGuard";
 import { FullscreenGate } from "@/components/FullscreenGate";
+import { MultiDisplayGate } from "@/components/MultiDisplayGate";
 import { TestTimer } from "@/components/TestTimer";
 import { markdownToHtml } from "@/lib/markdown";
 import { statusLabel, isAccepted, isFailed, JUDGE0_WRONG_ANSWER } from "@/lib/judge0-status";
@@ -582,6 +583,7 @@ export default function SessionPage() {
     <>
       <ProctorGuard onEvent={reportEvent} enabled={!ending} />
 
+      <MultiDisplayGate>
       <FullscreenGate violationCount={violations.count} maxViolations={violations.max}>
         <div className="h-screen flex flex-col bg-gray-900 text-white overflow-hidden no-select">
           {/* Header */}
@@ -737,6 +739,7 @@ export default function SessionPage() {
           </div>
         </div>
       </FullscreenGate>
+      </MultiDisplayGate>
 
       {/* Toast */}
       {toast && (

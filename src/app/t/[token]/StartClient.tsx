@@ -4,7 +4,7 @@ import { signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { markdownToHtml } from "@/lib/markdown";
-import { requestFullscreen } from "@/components/ProctorGuard";
+import { requestFullscreen, isMultiDisplay } from "@/components/ProctorGuard";
 
 interface Props {
   token: string;
@@ -36,6 +36,17 @@ export function StartClient(props: Props) {
     if (starting) return;
     setStarting(true);
     setError(null);
+
+    // Block start when multiple displays are connected. A second screen lets
+    // the candidate keep reference material visible without ever triggering
+    // tab_switch or fullscreen_exit, defeating the entire proctoring model.
+    if (isMultiDisplay()) {
+      setError(
+        "Multiple displays detected. Please disconnect all extra monitors and use a single screen, then press Start again."
+      );
+      setStarting(false);
+      return;
+    }
 
     // Fullscreen must be requested inside the click handler — the browser
     // rejects a programmatic request once the user gesture has been consumed by
@@ -161,6 +172,7 @@ export function StartClient(props: Props) {
         <ul className="space-y-1.5 text-xs text-gray-300">
           <li>• The test runs in <strong>fullscreen</strong>. Leaving fullscreen hides the test and records a warning.</li>
           <li>• Switching tabs or windows <strong>records a warning</strong>.</li>
+          <li>• <strong>Multiple displays are not allowed.</strong> The test will not start and will be blocked if an extra monitor is detected.</li>
           {assessment.maxViolations > 0 && (
             <li>
               • After <strong>{assessment.maxViolations} warnings</strong> your test is submitted

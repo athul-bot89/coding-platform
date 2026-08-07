@@ -136,11 +136,29 @@ export function ProctorGuard({ onEvent, enabled = true }: ProctorGuardProps) {
     window.addEventListener("beforeprint", handleBeforePrint);
 
     // Two screens is the cheapest way to keep a solution visible without ever
-    // leaving fullscreen. Report it once at start; it isn't counted.
+    // leaving fullscreen. Report it on detection; the screenschange event fires
+    // when a display is connected or disconnected mid-session.
     if (typeof window !== "undefined" && window.screen) {
       const s = window.screen as any;
       if (s.isExtended === true) {
         onEventRef.current("multi_display", "screen.isExtended");
+      }
+      // The Screen API fires "change" on the ScreenDetails object when a
+      // display is added/removed. Fall back to a poll for browsers that do
+      // not support getScreenDetails.
+      if (typeof s.addEventListener === "function") {
+        s.addEventListener("change", handleScreenChange);
+      }
+    }
+    const screenPoll = setInterval(() => {
+      if (typeof window !== "undefined" && (window.screen as any).isExtended === true) {
+        report("multi_display", "screen.isExtended (poll)");
+      }
+    }, 3000);
+
+    function handleScreenChange() {
+      if ((window.screen as any).isExtended === true) {
+        report("multi_display", "screen.isExtended (change)");
       }
     }
 
@@ -160,6 +178,13 @@ export function ProctorGuard({ onEvent, enabled = true }: ProctorGuardProps) {
       }
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("beforeprint", handleBeforePrint);
+      clearInterval(screenPoll);
+      if (typeof window !== "undefined" && window.screen) {
+        const s = window.screen as any;
+        if (typeof s.removeEventListener === "function") {
+          s.removeEventListener("change", handleScreenChange);
+        }
+      }
     };
   }, [enabled]);
 
@@ -195,4 +220,10 @@ export async function requestFullscreen(): Promise<boolean> {
 export function isFullscreen(): boolean {
   const d = document as any;
   return !!(d.fullscreenElement || d.webkitFullscreenElement || d.msFullscreenElement);
+}
+
+/** Returns true when the browser reports more than one display. */
+export function isMultiDisplay(): boolean {
+  if (typeof window === "undefined" || !window.screen) return false;
+  return (window.screen as any).isExtended === true;
 }

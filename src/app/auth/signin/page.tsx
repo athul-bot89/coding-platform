@@ -6,9 +6,11 @@ export default function SignIn() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="bg-gray-800 p-8 rounded-xl shadow-xl max-w-md w-full">
-        <h2 className="text-2xl font-bold text-white text-center mb-6">
-          Sign In to CodeTest
-        </h2>
+        <img
+          src="https://www.botangelos.com/assets/img/Botangelos_white.png"
+          alt="Botangelos"
+          className="h-10 mx-auto mb-6"
+        />
         <button
           onClick={() => signIn("google", { callbackUrl: "/problems" })}
           className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"

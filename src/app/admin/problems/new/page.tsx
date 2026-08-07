@@ -167,9 +167,9 @@ export default function NewProblemPage() {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <header className="border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          Code<span className="text-green-500">Test</span>
-          <span className="text-sm text-purple-400 ml-2">New Problem</span>
+        <h1 className="flex items-center gap-2">
+          <img src="https://www.botangelos.com/assets/img/Botangelos_white.png" alt="Botangelos" className="h-7" />
+          <span className="text-sm text-purple-400">New Problem</span>
         </h1>
         <button
           onClick={() => router.push("/admin/problems")}

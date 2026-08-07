@@ -109,10 +109,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-gray-800 bg-gray-950 sticky top-0 h-screen">
         <div className="px-4 py-4 border-b border-gray-800">
           <Link href="/admin" className="block">
-            <span className="text-lg font-bold">
-              Code<span className="text-green-500">Test</span>
-            </span>
-            <span className="block text-[11px] text-purple-400">Admin</span>
+            <img
+              src="https://www.botangelos.com/assets/img/Botangelos_white.png"
+              alt="Botangelos"
+              className="h-7"
+            />
+            <span className="block text-[11px] text-purple-400 mt-1">Admin</span>
           </Link>
         </div>
 
@@ -161,9 +163,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Nav — narrow screens */}
       <div className="lg:hidden border-b border-gray-800 bg-gray-950">
         <div className="px-4 pt-3 flex items-center justify-between">
-          <span className="text-base font-bold">
-            Code<span className="text-green-500">Test</span>
-            <span className="text-[11px] text-purple-400 ml-1.5">Admin</span>
+          <span className="flex items-center gap-1.5">
+            <img src="https://www.botangelos.com/assets/img/Botangelos_white.png" alt="Botangelos" className="h-5" />
+            <span className="text-[11px] text-purple-400">Admin</span>
           </span>
           {liveBadge}
         </div>

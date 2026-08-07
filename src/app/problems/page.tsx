@@ -74,8 +74,8 @@ export default function ProblemsPage() {
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
       <header className="border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          Code<span className="text-green-500">Test</span>
+        <h1>
+          <img src="https://www.botangelos.com/assets/img/Botangelos_white.png" alt="Botangelos" className="h-7" />
         </h1>
         <div className="flex items-center gap-4">
           {(session?.user as any)?.role === "admin" && (

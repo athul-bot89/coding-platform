@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "CodeTest - Coding Assessment Platform",
+  title: "Botangelos - Coding Assessment Platform",
   description: "Online coding test platform",
 };
 

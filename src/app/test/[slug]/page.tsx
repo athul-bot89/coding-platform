@@ -4,7 +4,12 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { CodeEditor } from "@/components/CodeEditor";
-import { getMonacoLanguage, languageName } from "@/lib/languages";
+import {
+  getMonacoLanguage,
+  languageName,
+  DEFAULT_LANGUAGE_ID,
+  defaultLanguageFor,
+} from "@/lib/languages";
 import { ProctorGuard, requestFullscreen } from "@/components/ProctorGuard";
 import { markdownToHtml } from "@/lib/markdown";
 import { fetchJson, postJson, errorMessage } from "@/lib/fetch-json";
@@ -19,9 +24,6 @@ import {
 // silently dropped from polling for as long as the tab stays open.
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLLS = 80;
-
-// Only used until the problem's own language list arrives.
-const DEFAULT_LANGUAGE_ID = 71;
 
 interface Problem {
   id: string;
@@ -72,6 +74,8 @@ export default function TestPage() {
   const [testStarted, setTestStarted] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Language the candidate picked but has not yet confirmed losing their code for.
+  const [pendingLang, setPendingLang] = useState<number | null>(null);
 
   const mounted = useRef(true);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,11 +103,11 @@ export default function TestPage() {
         if (cancelled) return;
 
         const langs = parseLanguageIds(data.allowedLanguages);
-        const first = langs[0] ?? DEFAULT_LANGUAGE_ID;
+        const initial = defaultLanguageFor(langs);
 
         setProblem(data);
-        setSelectedLang(first);
-        setCode(data.starterCode?.[String(first)] ?? "");
+        setSelectedLang(initial);
+        setCode(data.starterCode?.[String(initial)] ?? "");
       } catch (err) {
         if (!cancelled) setLoadError(errorMessage(err, "Could not load this problem."));
       }
@@ -117,6 +121,12 @@ export default function TestPage() {
   // Nothing typed here is persisted anywhere, so an overwritten buffer is gone
   // for good: only reseed code the candidate never touched, leave it alone when
   // the new language ships no template, and ask before discarding real work.
+  //
+  // The ask is an in-page modal rather than window.confirm because every browser
+  // drops the document out of fullscreen to show a native dialog, which
+  // ProctorGuard then reports as a fullscreen_exit violation — a candidate would
+  // be penalised for changing language. Switching is therefore deferred until
+  // they answer: cancelling leaves both the language and the code untouched.
   const changeLanguage = (nextLang: number) => {
     if (!problem || nextLang === selectedLang) return;
 
@@ -124,17 +134,21 @@ export default function TestPage() {
     const untouched =
       !code.trim() || code === (problem.starterCode?.[String(selectedLang)] ?? "");
 
-    if (
-      starter &&
-      (untouched ||
-        window.confirm(
-          `Load the ${languageName(nextLang)} starter template? Your current code will be replaced.`
-        ))
-    ) {
-      setCode(starter);
+    if (starter && !untouched) {
+      setPendingLang(nextLang);
+      return;
     }
 
+    if (starter) setCode(starter);
     setSelectedLang(nextLang);
+  };
+
+  /** Carry out the switch the candidate just confirmed in the modal. */
+  const applyPendingLang = () => {
+    if (pendingLang === null) return;
+    setCode(problem?.starterCode?.[String(pendingLang)] ?? "");
+    setSelectedLang(pendingLang);
+    setPendingLang(null);
   };
 
   /** Put the starter template for the selected language back in the editor. */
@@ -464,6 +478,38 @@ export default function TestPage() {
                 className="flex-1 px-4 py-2.5 bg-red-600 rounded font-medium hover:bg-red-700"
               >
                 Reset code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Language switch confirmation */}
+      {pendingLang !== null && (
+        <div className="fixed inset-0 z-[120] bg-black/80 flex items-center justify-center px-4">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-lg font-semibold mb-2">
+              ⚠️ Switch to {languageName(pendingLang)}?
+            </h2>
+            <p className="text-sm text-gray-400 mb-4">
+              The editor loads the{" "}
+              <strong className="text-white">{languageName(pendingLang)}</strong> starter
+              template and everything you have written in{" "}
+              <strong className="text-white">{languageName(selectedLang)}</strong> is
+              discarded. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPendingLang(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-700 rounded font-medium hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={applyPendingLang}
+                className="flex-1 px-4 py-2.5 bg-red-600 rounded font-medium hover:bg-red-700"
+              >
+                Switch language
               </button>
             </div>
           </div>

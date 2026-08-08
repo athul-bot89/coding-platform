@@ -44,6 +44,18 @@ const MONACO_LANG: Record<number, string> = {
   78: "kotlin",
 };
 
+/** Python 3 — what every code editor starts on when the problem allows it. */
+export const DEFAULT_LANGUAGE_ID = 71;
+
+/**
+ * The language an editor should open on for a problem. Python when it is
+ * allowed, otherwise the problem's first allowed language.
+ */
+export function defaultLanguageFor(allowed: number[] | undefined): number {
+  if (!allowed || allowed.length === 0) return DEFAULT_LANGUAGE_ID;
+  return allowed.includes(DEFAULT_LANGUAGE_ID) ? DEFAULT_LANGUAGE_ID : allowed[0];
+}
+
 export function getMonacoLanguage(languageId: number): string {
   return MONACO_LANG[languageId] || "plaintext";
 }

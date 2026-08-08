@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CodeEditor, EditChange } from "@/components/CodeEditor";
-import { getMonacoLanguage, languageName } from "@/lib/languages";
+import { getMonacoLanguage, languageName, defaultLanguageFor } from "@/lib/languages";
 import { ProctorGuard } from "@/components/ProctorGuard";
 import { FullscreenGate } from "@/components/FullscreenGate";
 import { MultiDisplayGate } from "@/components/MultiDisplayGate";
@@ -531,7 +531,7 @@ export default function SessionPage() {
             continue;
           }
 
-          const langId = p.draft?.languageId ?? p.allowedLanguages[0];
+          const langId = p.draft?.languageId ?? defaultLanguageFor(p.allowedLanguages);
           initial[p.id] = {
             languageId: langId,
             code: p.draft?.code ?? p.starterCode[String(langId)] ?? "",
@@ -749,7 +749,7 @@ export default function SessionPage() {
   const resetCode = useCallback(
     (problem: SessionProblem) => {
       const languageId =
-        editorsRef.current[problem.id]?.languageId ?? problem.allowedLanguages[0];
+        editorsRef.current[problem.id]?.languageId ?? defaultLanguageFor(problem.allowedLanguages);
       const code = problem.starterCode[String(languageId)] ?? "";
 
       mirrorDraft(problem.id, code, languageId);
@@ -1038,7 +1038,10 @@ export default function SessionPage() {
     );
   }
 
-  const editor = editors[active.id] ?? { code: "", languageId: active.allowedLanguages[0] };
+  const editor = editors[active.id] ?? {
+    code: "",
+    languageId: defaultLanguageFor(active.allowedLanguages),
+  };
   const result = results[active.id];
   const resultError = resultErrors[active.id] ?? null;
   const activeBusy = busy[active.id];

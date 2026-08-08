@@ -4,7 +4,12 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { fetchJson, postJson, errorMessage, HttpError } from "@/lib/fetch-json";
-import { LANGUAGE_NAMES, ALL_LANGUAGE_IDS } from "@/lib/languages";
+import {
+  LANGUAGE_NAMES,
+  ALL_LANGUAGE_IDS,
+  DEFAULT_LANGUAGE_ID,
+  defaultLanguageFor,
+} from "@/lib/languages";
 
 interface TestCase {
   kind: "sample" | "hidden";
@@ -45,10 +50,10 @@ export default function EditProblemPage() {
   const [memoryLimitKb, setMemoryLimitKb] = useState(128000);
   const [isActive, setIsActive] = useState(true);
   const [starterCode, setStarterCode] = useState<Record<string, string>>({});
-  const [starterLang, setStarterLang] = useState(71);
+  const [starterLang, setStarterLang] = useState(DEFAULT_LANGUAGE_ID);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
 
-  const [testRunLang, setTestRunLang] = useState(71);
+  const [testRunLang, setTestRunLang] = useState(DEFAULT_LANGUAGE_ID);
   const [testRunCode, setTestRunCode] = useState("");
   const [testRunResults, setTestRunResults] = useState<TestRunResponse | null>(null);
   const [testRunning, setTestRunning] = useState(false);
@@ -88,8 +93,9 @@ export default function EditProblemPage() {
         }))
       );
       if (p.allowedLanguages.length > 0) {
-        setStarterLang(p.allowedLanguages[0]);
-        setTestRunLang(p.allowedLanguages[0]);
+        const initial = defaultLanguageFor(p.allowedLanguages);
+        setStarterLang(initial);
+        setTestRunLang(initial);
       }
     } catch (err) {
       if (err instanceof HttpError && err.status === 404) {

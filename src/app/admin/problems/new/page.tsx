@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { postJson, errorMessage, HttpError } from "@/lib/fetch-json";
-import { LANGUAGE_NAMES, ALL_LANGUAGE_IDS } from "@/lib/languages";
+import { LANGUAGE_NAMES, ALL_LANGUAGE_IDS, DEFAULT_LANGUAGE_ID } from "@/lib/languages";
 
 interface TestCase {
   kind: "sample" | "hidden";
@@ -38,14 +38,19 @@ export default function NewProblemPage() {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
-  const [allowedLanguages, setAllowedLanguages] = useState<number[]>([71, 54, 62, 63]);
+  const [allowedLanguages, setAllowedLanguages] = useState<number[]>([
+    DEFAULT_LANGUAGE_ID,
+    54,
+    62,
+    63,
+  ]);
   const [timeLimitMs, setTimeLimitMs] = useState(2000);
   const [memoryLimitKb, setMemoryLimitKb] = useState(128000);
   const [isActive, setIsActive] = useState(true);
 
   // Starter code per language
   const [starterCode, setStarterCode] = useState<Record<string, string>>({});
-  const [starterLang, setStarterLang] = useState(71);
+  const [starterLang, setStarterLang] = useState(DEFAULT_LANGUAGE_ID);
 
   // Test cases
   const [testCases, setTestCases] = useState<TestCase[]>([
@@ -53,7 +58,7 @@ export default function NewProblemPage() {
   ]);
 
   // Test runner state
-  const [testRunLang, setTestRunLang] = useState(71);
+  const [testRunLang, setTestRunLang] = useState(DEFAULT_LANGUAGE_ID);
   const [testRunCode, setTestRunCode] = useState("");
   const [testRunResults, setTestRunResults] = useState<TestRunResponse | null>(null);
   const [testRunning, setTestRunning] = useState(false);

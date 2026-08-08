@@ -18,17 +18,13 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        working-directory: coding-platform
         run: npm ci
 
       - name: Generate Prisma Client
-        working-directory: coding-platform
         run: npx prisma generate
 
       - name: Run unit tests
-        working-directory: coding-platform
         run: npx vitest run tests/unit --reporter=verbose
 
       - name: Run integration tests
-        working-directory: coding-platform
         run: npx vitest run tests/integration --reporter=verbose

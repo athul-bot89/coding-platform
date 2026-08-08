@@ -11,26 +11,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
-          cache-dependency-path: coding-platform/package-lock.json
 
       - name: Install dependencies
-        working-directory: coding-platform
         run: npm ci
 
       - name: Generate Prisma Client
-        working-directory: coding-platform
         run: npx prisma generate
 
       - name: Run unit tests
-        working-directory: coding-platform
         run: npx vitest run tests/unit --reporter=verbose
 
       - name: Run integration tests
-        working-directory: coding-platform
         run: npx vitest run tests/integration --reporter=verbose

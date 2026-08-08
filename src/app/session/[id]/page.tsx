@@ -47,6 +47,13 @@ const POLL_BUDGET_MS = 90_000;
 /** How often the banner's "offline for 2m 10s" and the save indicator re-render. */
 const UI_TICK_MS = 1000;
 
+/**
+ * Questions are presented in two sections: the first three, then the rest.
+ * Grouping only — every question stays reachable at any time, and nothing about
+ * numbering, scoring, submission or the session payload changes with it.
+ */
+const SECTION_ONE_COUNT = 3;
+
 interface SessionProblem {
   index: number;
   id: string;
@@ -1084,6 +1091,10 @@ export default function SessionPage() {
   const resultError = resultErrors[active.id] ?? null;
   const activeBusy = busy[active.id];
   const solvedCount = problems.filter((p) => p.solved).length;
+  // A test short enough to fit in one section is not a sectioned test, so the
+  // headers and the "Section 1 · Question 2" line stay out of the way entirely.
+  const sections = toSections(problems);
+  const sectioned = sections.length > 1;
   // Tone only — the tally behind it is never rendered.
   const violationBadgeLevel = violationLevel(violations.count, violations.max);
 
@@ -1153,31 +1164,50 @@ export default function SessionPage() {
 
           <div ref={rowRef} className="flex flex-1 overflow-hidden">
             {/* Question rail */}
-            <nav className="w-16 bg-gray-950 border-r border-gray-800 flex flex-col items-center py-3 gap-2 shrink-0">
-              {problems.map((p, i) => (
-                <button
-                  key={p.id}
-                  onClick={() => switchQuestion(i)}
-                  title={`${p.title} — ${p.points} pts`}
-                  className={`w-11 h-11 rounded-lg text-sm font-semibold border transition-colors relative ${
-                    i === activeIdx
-                      ? "bg-green-600 border-green-500 text-white"
-                      : p.solved
-                      ? "bg-green-950 border-green-800 text-green-400 hover:bg-green-900"
-                      : p.attempted
-                      ? "bg-gray-800 border-yellow-800 text-yellow-400 hover:bg-gray-700"
-                      : "bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700"
-                  }`}
-                >
-                  Q{i + 1}
-                  {p.solved && i !== activeIdx && (
-                    <span className="absolute -top-1 -right-1 text-[10px] bg-green-600 rounded-full w-4 h-4 flex items-center justify-center">
-                      ✓
-                    </span>
+            <nav className="w-16 bg-gray-950 border-r border-gray-800 flex flex-col items-center py-3 gap-2 shrink-0 overflow-y-auto">
+              {sections.map((section) => (
+                <div key={section.title} className="w-full flex flex-col items-center gap-2">
+                  {/* The rail is 64px wide, so the header is abbreviated and the
+                      full name lives in the tooltip and the problem panel. */}
+                  {sectioned && (
+                    <div className="w-full px-2.5 pt-1" title={section.title}>
+                      <div className="text-[9px] font-semibold uppercase tracking-widest text-gray-500 text-center">
+                        {section.short}
+                      </div>
+                      <div className="mt-1 border-t border-gray-800" />
+                    </div>
                   )}
-                </button>
+                  {section.items.map((p, i) => {
+                    // Numbering stays continuous across sections, so Q4 is the
+                    // fourth question of the test rather than the first of S2.
+                    const index = section.offset + i;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => switchQuestion(index)}
+                        title={`${sectioned ? `${section.title} — ` : ""}${p.title} — ${p.points} pts`}
+                        className={`w-11 h-11 rounded-lg text-sm font-semibold border transition-colors relative shrink-0 ${
+                          index === activeIdx
+                            ? "bg-green-600 border-green-500 text-white"
+                            : p.solved
+                            ? "bg-green-950 border-green-800 text-green-400 hover:bg-green-900"
+                            : p.attempted
+                            ? "bg-gray-800 border-yellow-800 text-yellow-400 hover:bg-gray-700"
+                            : "bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700"
+                        }`}
+                      >
+                        Q{index + 1}
+                        {p.solved && index !== activeIdx && (
+                          <span className="absolute -top-1 -right-1 text-[10px] bg-green-600 rounded-full w-4 h-4 flex items-center justify-center">
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               ))}
-              <div className="mt-auto text-[10px] text-gray-600 text-center leading-tight">
+              <div className="mt-auto pt-3 text-[10px] text-gray-600 text-center leading-tight shrink-0">
                 {solvedCount}/{problems.length}
                 <br />
                 solved
@@ -1190,6 +1220,12 @@ export default function SessionPage() {
               style={{ width: `${layout.splitPct}%` }}
               className="shrink-0 overflow-y-auto p-4"
             >
+              {sectioned && (
+                <div className="text-xs text-gray-500 mb-1">
+                  {sectionTitleFor(activeIdx)} · Question {activeIdx + 1} of {problems.length}
+                </div>
+              )}
+
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-lg font-semibold">{active.title}</h2>
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-800 text-gray-400">
@@ -1400,6 +1436,37 @@ export default function SessionPage() {
       )}
     </>
   );
+}
+
+interface QuestionSection {
+  title: string;
+  /** What fits in the 64px rail. */
+  short: string;
+  /** Index of this section's first question in the flat problem list. */
+  offset: number;
+  items: SessionProblem[];
+}
+
+/**
+ * Group the questions into the sections the rail draws. Empty sections are
+ * dropped, so a test with three questions or fewer comes back as a single
+ * section and the screen renders exactly as it did before sections existed.
+ */
+function toSections(problems: SessionProblem[]): QuestionSection[] {
+  return [
+    { title: "Section 1", short: "S1", offset: 0, items: problems.slice(0, SECTION_ONE_COUNT) },
+    {
+      title: "Section 2",
+      short: "S2",
+      offset: SECTION_ONE_COUNT,
+      items: problems.slice(SECTION_ONE_COUNT),
+    },
+  ].filter((section) => section.items.length > 0);
+}
+
+/** Which section a question index falls in, for the problem panel's header. */
+function sectionTitleFor(index: number): string {
+  return index < SECTION_ONE_COUNT ? "Section 1" : "Section 2";
 }
 
 function emptyBuffer(): MetricBuffer {

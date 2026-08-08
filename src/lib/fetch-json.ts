@@ -49,11 +49,13 @@ export function postJson<T = any>(
   body: unknown,
   init: RequestInit = {}
 ): Promise<T> {
+  // `init` first: the JSON body and its Content-Type are what this helper is for,
+  // so they must survive a caller passing headers of their own alongside them.
   return fetchJson<T>(input, {
+    ...init,
     method: init.method ?? "POST",
     headers: { "Content-Type": "application/json", ...(init.headers || {}) },
     body: JSON.stringify(body),
-    ...init,
   });
 }
 

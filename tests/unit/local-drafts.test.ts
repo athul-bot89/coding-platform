@@ -128,5 +128,107 @@ describe("local-drafts", () => {
       clearDrafts(SESSION);
       expect(loadDrafts(SESSION)).toEqual({});
     });
+
+    it("leaves other sessions' mirrors alone", () => {
+      rememberDraft(SESSION, "prob-1", "mine", 71, 1000);
+      rememberDraft("other-session", "prob-1", "theirs", 71, 1000);
+
+      clearDrafts(SESSION);
+
+      expect(loadDrafts(SESSION)).toEqual({});
+      expect(loadDrafts("other-session")["prob-1"].code).toBe("theirs");
+    });
+
+    it("swallows a storage error rather than throwing mid-test", () => {
+      localStorageMock.removeItem.mockImplementationOnce(() => {
+        throw new Error("SecurityError");
+      });
+      expect(() => clearDrafts(SESSION)).not.toThrow();
+    });
+  });
+
+  describe("keeps sessions apart", () => {
+    it("stores each session's drafts under its own key", () => {
+      rememberDraft(SESSION, "prob-1", "mine", 71, 1000);
+      rememberDraft("other-session", "prob-1", "theirs", 62, 2000);
+
+      expect(loadDrafts(SESSION)["prob-1"].code).toBe("mine");
+      expect(loadDrafts("other-session")["prob-1"].code).toBe("theirs");
+    });
+  });
+
+  describe("surviving a bad storage slot", () => {
+    it("reads a corrupted write as empty", () => {
+      localStorageMock.setItem("test-drafts:" + SESSION, "{not json");
+      expect(loadDrafts(SESSION)).toEqual({});
+    });
+
+    it("reads somebody else's array as empty", () => {
+      localStorageMock.setItem("test-drafts:" + SESSION, JSON.stringify(["nope"]));
+      expect(loadDrafts(SESSION)).toEqual({});
+    });
+
+    it("reads a JSON null as empty", () => {
+      localStorageMock.setItem("test-drafts:" + SESSION, "null");
+      expect(loadDrafts(SESSION)).toEqual({});
+    });
+
+    it("overwrites a corrupted slot on the next edit", () => {
+      localStorageMock.setItem("test-drafts:" + SESSION, "{not json");
+
+      expect(rememberDraft(SESSION, "prob-1", "recovered", 71, 1000)).toBe(true);
+      expect(loadDrafts(SESSION)["prob-1"].code).toBe("recovered");
+    });
+  });
+
+  describe("when the browser refuses the write", () => {
+    it("reports failure so the candidate can be told their code is editor-only", () => {
+      localStorageMock.setItem.mockImplementationOnce(() => {
+        throw new Error("QuotaExceededError");
+      });
+
+      expect(rememberDraft(SESSION, "prob-1", "code", 71, 1000)).toBe(false);
+    });
+
+    it("reports success on a normal write", () => {
+      expect(rememberDraft(SESSION, "prob-1", "code", 71, 1000)).toBe(true);
+    });
+  });
+
+  describe("markSynced on a draft that is gone", () => {
+    it("is a no-op and writes nothing", () => {
+      markSynced(SESSION, "prob-unknown", 1000);
+
+      expect(loadDrafts(SESSION)).toEqual({});
+      expect(localStorageMock.setItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("pruneDrafts", () => {
+    it("clears everything when the session serves no problems", () => {
+      rememberDraft(SESSION, "prob-1", "code", 71, 1000);
+      pruneDrafts(SESSION, []);
+      expect(loadDrafts(SESSION)).toEqual({});
+    });
+
+    it("writes nothing when every draft is still wanted", () => {
+      rememberDraft(SESSION, "prob-1", "code", 71, 1000);
+      localStorageMock.setItem.mockClear();
+
+      pruneDrafts(SESSION, ["prob-1"]);
+
+      expect(localStorageMock.setItem).not.toHaveBeenCalled();
+    });
+
+    it("keeps the synced state of the drafts it keeps", () => {
+      rememberDraft(SESSION, "prob-1", "code", 71, 1000);
+      markSynced(SESSION, "prob-1", 1000);
+      rememberDraft(SESSION, "prob-2", "code2", 71, 2000);
+
+      pruneDrafts(SESSION, ["prob-1"]);
+
+      expect(loadDrafts(SESSION)["prob-1"].syncedAt).toBe(1000);
+      expect(dirtyDrafts(SESSION)).toHaveLength(0);
+    });
   });
 });

@@ -1,23 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAttempt } from "@/lib/grading";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Practice submissions (the un-proctored /test/[slug] flow).
 // Proctored submissions go through /api/session/[id]/submit instead.
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // This endpoint grades every hidden case and reports pass/fail on each one, so
+  // it is an oracle on any question that is still in use. The in-progress check
+  // below only ever closed that window during a test; a candidate who practised
+  // the day before got the same answers with nothing in the way. Practice is an
+  // admin surface for that reason — candidates are graded through /t/[token].
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
 
-  const userId = (session.user as any).id as string;
+  const userId = auth.userId;
 
-  // This endpoint grades every hidden case and records nothing about how the
-  // code was written, so a candidate sitting a live test could aim it at one of
-  // their own questions and read pass/fail on each hidden case for free. While
-  // any test is in progress the only legal grading path is the session one.
+  // Still enforced for an admin sitting a test of their own: while any session is
+  // in progress the only legal grading path is the session one.
   const liveSessions = await prisma.testSession.count({
     where: { userId, state: "in_progress" },
   });

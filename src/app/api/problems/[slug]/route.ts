@@ -1,22 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Admin-only, exactly like the problem list this backs. Being signed in is not
+  // a meaningful boundary here — sign-in is open to any Google account — so a
+  // merely-authenticated check left the full statement, the samples and the
+  // starter code readable by anyone who knew or guessed a slug.
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
 
-  // Same rule as the problem list: during a proctored test the session page is
-  // the only surface a candidate gets. Otherwise the un-proctored editor doubles
-  // as a scratchpad where nothing is recorded and nothing is measured.
+  // Retained for an admin who is also sitting a test: while a session is live
+  // the session page is the only surface, so practice cannot be used to read
+  // ahead. Outside one the un-proctored editor is a scratchpad where nothing is
+  // recorded and nothing is measured.
   const liveSessions = await prisma.testSession.count({
-    where: { userId: (session.user as any).id, state: "in_progress" },
+    where: { userId: auth.userId, state: "in_progress" },
   });
   if (liveSessions > 0) {
     return NextResponse.json(

@@ -8,6 +8,11 @@ interface EditorSettingsMenuProps {
   onFontSize: (size: number) => void;
   /** Puts the split, the results drawer and the font size back to defaults. */
   onResetLayout: () => void;
+  /**
+   * Opens the rules and instructions panel. Omitted where there are no rules to
+   * show, in which case the entry is left out of the menu entirely.
+   */
+  onOpenRules?: () => void;
   disabled?: boolean;
 }
 
@@ -21,6 +26,7 @@ export function EditorSettingsMenu({
   fontSize,
   onFontSize,
   onResetLayout,
+  onOpenRules,
   disabled = false,
 }: EditorSettingsMenuProps) {
   const [open, setOpen] = useState(false);
@@ -118,6 +124,25 @@ export function EditorSettingsMenu({
           >
             Reset layout
           </button>
+
+          {onOpenRules && (
+            <>
+              <div className="my-3 border-t border-gray-700" />
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onOpenRules();
+                }}
+                className="w-full rounded bg-gray-700 px-3 py-1.5 text-left text-sm font-medium hover:bg-gray-600"
+              >
+                📋 Rules &amp; instructions
+              </button>
+              <p className="mt-1.5 text-[11px] leading-snug text-gray-500">
+                The proctoring rules you agreed to, plus how to use this screen.
+              </p>
+            </>
+          )}
         </div>
       )}
     </div>

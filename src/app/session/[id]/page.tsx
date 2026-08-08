@@ -11,6 +11,7 @@ import { TestTimer } from "@/components/TestTimer";
 import { ConnectionBanner, SaveState, formatDuration } from "@/components/ConnectionBanner";
 import { ResizeHandle } from "@/components/ResizeHandle";
 import { EditorSettingsMenu } from "@/components/EditorSettingsMenu";
+import { RulesDialog } from "@/components/RulesDialog";
 import { useEditorLayout, DEFAULT_LAYOUT, NUDGE_PCT, NUDGE_PX } from "@/lib/editor-layout";
 import { markdownToHtml } from "@/lib/markdown";
 import { statusLabel, isAccepted, isFailed, JUDGE0_WRONG_ANSWER } from "@/lib/judge0-status";
@@ -76,6 +77,8 @@ interface SessionProblem {
 interface SessionData {
   id: string;
   title: string;
+  /** Admin-authored markdown, repeated in the rules panel. */
+  instructions: string | null;
   candidateName: string;
   remainingMs: number;
   startedAt: string;
@@ -139,6 +142,7 @@ export default function SessionPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [ending, setEnding] = useState(false);
 
   // ---- Connection state ----
@@ -1298,6 +1302,7 @@ export default function SessionPage() {
                     fontSize={layout.fontSize}
                     onFontSize={(fontSize) => setLayout({ fontSize })}
                     onResetLayout={resetLayout}
+                    onOpenRules={() => setRulesOpen(true)}
                   />
                   <button
                     onClick={() => setConfirmReset(true)}
@@ -1434,6 +1439,15 @@ export default function SessionPage() {
           </div>
         </div>
       )}
+
+      {/* Rules and instructions, reachable from the editor's gear menu */}
+      <RulesDialog
+        open={rulesOpen}
+        onClose={() => setRulesOpen(false)}
+        instructions={data.instructions}
+        violationCount={violations.count}
+        maxViolations={violations.max}
+      />
     </>
   );
 }

@@ -77,6 +77,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({
     id: session.id,
     title: assessment.title,
+    // The same admin-authored markdown shown before the test started, so the
+    // rules panel inside the editor can repeat it without a second request.
+    instructions: assessment.instructions,
     candidateName: session.candidateName,
     remainingMs: remainingMs(session.endsAt),
     endsAt: session.endsAt,

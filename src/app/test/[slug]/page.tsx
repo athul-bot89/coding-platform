@@ -11,6 +11,9 @@ import {
   defaultLanguageFor,
 } from "@/lib/languages";
 import { ProctorGuard, requestFullscreen } from "@/components/ProctorGuard";
+import { ResizeHandle } from "@/components/ResizeHandle";
+import { EditorSettingsMenu } from "@/components/EditorSettingsMenu";
+import { useEditorLayout, DEFAULT_LAYOUT, NUDGE_PCT, NUDGE_PX } from "@/lib/editor-layout";
 import { markdownToHtml } from "@/lib/markdown";
 import { fetchJson, postJson, errorMessage } from "@/lib/fetch-json";
 import {
@@ -79,6 +82,35 @@ export default function TestPage() {
 
   const mounted = useRef(true);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ---- Panel sizing. Shared with the assessment screen, so a candidate who
+  // sized one finds the other already the way they left it.
+  const { layout, set: setLayout, reset: resetLayout } = useEditorLayout();
+  const rowRef = useRef<HTMLDivElement>(null);
+  const problemRef = useRef<HTMLDivElement>(null);
+  const columnRef = useRef<HTMLDivElement>(null);
+
+  const dragSplit = useCallback(
+    (clientX: number) => {
+      const row = rowRef.current;
+      const panel = problemRef.current;
+      if (!row || !panel) return;
+      const rowWidth = row.getBoundingClientRect().width;
+      if (rowWidth <= 0) return;
+      setLayout({ splitPct: ((clientX - panel.getBoundingClientRect().left) / rowWidth) * 100 });
+    },
+    [setLayout]
+  );
+
+  const dragResults = useCallback(
+    (_clientX: number, clientY: number) => {
+      const column = columnRef.current;
+      if (!column) return;
+      const rect = column.getBoundingClientRect();
+      setLayout({ resultsPx: Math.min(rect.bottom - clientY, rect.height - 160) });
+    },
+    [setLayout]
+  );
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
@@ -319,6 +351,11 @@ export default function TestPage() {
               </option>
             ))}
           </select>
+          <EditorSettingsMenu
+            fontSize={layout.fontSize}
+            onFontSize={(fontSize) => setLayout({ fontSize })}
+            onResetLayout={resetLayout}
+          />
           <button
             onClick={() => setConfirmReset(true)}
             disabled={submitting}
@@ -338,9 +375,13 @@ export default function TestPage() {
       </header>
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div ref={rowRef} className="flex flex-1 overflow-hidden">
         {/* Left panel — Problem description */}
-        <div className="w-2/5 overflow-y-auto p-4 border-r border-gray-700">
+        <div
+          ref={problemRef}
+          style={{ width: `${layout.splitPct}%` }}
+          className="shrink-0 overflow-y-auto p-4"
+        >
           <div className="prose prose-invert prose-sm max-w-none">
             <div dangerouslySetInnerHTML={{ __html: markdownToHtml(problem.description) }} />
           </div>
@@ -363,14 +404,23 @@ export default function TestPage() {
           </div>
         </div>
 
+        <ResizeHandle
+          axis="x"
+          label="Resize the problem panel"
+          onMove={dragSplit}
+          onNudge={(steps) => setLayout({ splitPct: layout.splitPct + steps * NUDGE_PCT })}
+          onReset={() => setLayout({ splitPct: DEFAULT_LAYOUT.splitPct })}
+        />
+
         {/* Right panel — Editor + Results */}
-        <div className="flex-1 flex flex-col">
+        <div ref={columnRef} className="flex-1 flex flex-col min-w-0">
           {/* Code editor */}
           <div className="flex-1 min-h-0">
             <CodeEditor
               language={getMonacoLanguage(selectedLang)}
               value={code}
               onChange={setCode}
+              fontSize={layout.fontSize}
             />
           </div>
 
@@ -382,7 +432,18 @@ export default function TestPage() {
 
           {/* Results panel */}
           {result && (
-            <div className="h-48 overflow-y-auto border-t border-gray-700 bg-gray-800 p-3">
+            <>
+            <ResizeHandle
+              axis="y"
+              label="Resize the results panel"
+              onMove={dragResults}
+              onNudge={(steps) => setLayout({ resultsPx: layout.resultsPx + steps * NUDGE_PX })}
+              onReset={() => setLayout({ resultsPx: DEFAULT_LAYOUT.resultsPx })}
+            />
+            <div
+              style={{ height: layout.resultsPx, maxHeight: "70%" }}
+              className="shrink-0 overflow-y-auto bg-gray-800 p-3"
+            >
               <div className="flex items-center gap-4 mb-3">
                 <h3 className="font-semibold text-sm">
                   Results: {result.score}/{result.maxScore}
@@ -452,6 +513,7 @@ export default function TestPage() {
                   </div>
                 ))}
             </div>
+            </>
           )}
         </div>
       </div>

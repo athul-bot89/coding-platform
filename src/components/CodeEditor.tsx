@@ -26,6 +26,8 @@ interface CodeEditorProps {
   /** Report a blocked clipboard attempt made through Monaco's own keybindings. */
   onBlocked?: (event: string, detail?: string) => void;
   readOnly?: boolean;
+  /** Candidate-chosen text size. See `useEditorLayout`. */
+  fontSize?: number;
 }
 
 /** Monaco normalizes line endings inside the model, so compare EOL-insensitively. */
@@ -41,6 +43,7 @@ export function CodeEditor({
   onEdit,
   onBlocked,
   readOnly = false,
+  fontSize = 14,
 }: CodeEditorProps) {
   const onEditRef = useRef(onEdit);
   onEditRef.current = onEdit;
@@ -104,7 +107,7 @@ export function CodeEditor({
       theme="vs-dark"
       onMount={handleMount}
       options={{
-        fontSize: 14,
+        fontSize,
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
         wordWrap: "on",

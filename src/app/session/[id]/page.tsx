@@ -49,11 +49,11 @@ const POLL_BUDGET_MS = 90_000;
 const UI_TICK_MS = 1000;
 
 /**
- * Questions are presented in two sections: the first three, then the rest.
+ * Questions are presented in two sections: the first five, then the rest.
  * Grouping only — every question stays reachable at any time, and nothing about
  * numbering, scoring, submission or the session payload changes with it.
  */
-const SECTION_ONE_COUNT = 3;
+const SECTION_ONE_COUNT = 5;
 
 interface SessionProblem {
   index: number;

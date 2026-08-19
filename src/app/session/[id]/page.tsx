@@ -1235,17 +1235,6 @@ export default function SessionPage() {
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-800 text-gray-400">
                   {active.points} pts
                 </span>
-                <span
-                  className={`text-xs ${
-                    active.difficulty === "easy"
-                      ? "text-green-400"
-                      : active.difficulty === "hard"
-                      ? "text-red-400"
-                      : "text-yellow-400"
-                  }`}
-                >
-                  {active.difficulty}
-                </span>
               </div>
 
               <div

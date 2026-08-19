@@ -1,0 +1,560 @@
+[
+  {
+    "slug": "count-vowels",
+    "title": "Count Vowels",
+    "difficulty": "easy",
+    "timeLimitMs": 2000,
+    "memoryLimitKb": 128000,
+    "allowedLanguages": "50,54,62,63,71,73,74",
+    "description": "## Count Vowels\n\nGiven a single line of text, count how many vowels it contains and print that count.\n\nThe vowels are `a`, `e`, `i`, `o`, `u`. Counting is **case-insensitive**, so both the lowercase forms (`a`, `e`, `i`, `o`, `u`) and the uppercase forms (`A`, `E`, `I`, `O`, `U`) count as vowels. The letter `y` is **not** counted as a vowel.\n\nAny other character - consonants, digits, spaces, punctuation - is not a vowel and must be ignored.\n\n### Input\nA single line containing a string s. The string may contain spaces, mixed uppercase and lowercase letters, digits and punctuation, so read the whole line, not just the first word.\n\n### Output\nPrint a single integer: the number of vowels in s.\n\n### Constraints\n- 1 <= |s| <= 1000\n- s consists of printable ASCII characters and may include spaces\n- Vowels are a, e, i, o, u in either case; y is not a vowel\n\n### Example\n**Input:** `Programming is fun`  \n**Output:** `5`\n",
+    "starterCode": {
+      "50": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[1005];\n    if (fgets(s, sizeof(s), stdin) == NULL) {\n        s[0] = '\\0';\n    }\n    /* strip the trailing newline, if any */\n    size_t len = strlen(s);\n    if (len > 0 && s[len - 1] == '\\n') {\n        s[len - 1] = '\\0';\n    }\n\n    /* Your code here */\n\n    return 0;\n}\n",
+      "54": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string s;\n    std::getline(std::cin, s);\n\n    // Your code here\n\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.hasNextLine() ? sc.nextLine() : \"\";\n\n        // Your code here\n    }\n}\n",
+      "63": "const s = require('fs').readFileSync(0, 'utf8').split('\\n')[0];\n\n// Your code here\n",
+      "71": "import sys\n\ns = sys.stdin.readline().rstrip('\\n')\n\n# Your code here\n",
+      "73": "use std::io;\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    let _s = input.trim_end_matches('\\n').trim_end_matches('\\r');\n\n    // Your code here\n}\n",
+      "74": "declare const require: any;\n\nconst s: string = require('fs').readFileSync(0, 'utf8').split('\\n')[0];\n\n// Your code here\n"
+    },
+    "cases": [
+      {
+        "ordinal": 1,
+        "kind": "sample",
+        "stdin": "Programming is fun",
+        "expectedOutput": "5",
+        "weight": 1
+      },
+      {
+        "ordinal": 2,
+        "kind": "sample",
+        "stdin": "hello world",
+        "expectedOutput": "3",
+        "weight": 1
+      },
+      {
+        "ordinal": 3,
+        "kind": "sample",
+        "stdin": "XYZ",
+        "expectedOutput": "0",
+        "weight": 1
+      },
+      {
+        "ordinal": 4,
+        "kind": "hidden",
+        "stdin": "e",
+        "expectedOutput": "1",
+        "weight": 1
+      },
+      {
+        "ordinal": 5,
+        "kind": "hidden",
+        "stdin": "Rhythm nymph glyph!",
+        "expectedOutput": "0",
+        "weight": 1
+      },
+      {
+        "ordinal": 6,
+        "kind": "hidden",
+        "stdin": "aAeEiIoOuU",
+        "expectedOutput": "10",
+        "weight": 1
+      },
+      {
+        "ordinal": 7,
+        "kind": "hidden",
+        "stdin": "X3?sO0wWjdou-MJfczJj1:zQapNN'L2HqJZl6FV;S5CalUD?bU-S5RKWu0 OpTlg4s!LB6Vgmn8bjQdtiUlimelGJmjBNSxSBQR4IRc-!6s1a7TAT'.BMejP:kdqOfB1AHsUCR3I'!ewnwPgOKimccgQO-3q68FBHRxPN1t9QCJ !-BHa9Qb?1 uzuHpeEAf?erLg2HiWrUnmuPfcQAC'R2r bfle7d!'v6suwBHRk5Ak?29J8M:gU Gf!:qwrX 5'5PoqF90Wm9dPYTG?GuW.UqU'cpgf;z;zPlnHC QShsYr2sOu:acHP4!eBhJf9Hb72,p9I9NeJNIZl:j,DyFfHo0lZ-zwR:GS:OMRLGX P qVYJ1H3cwhMLw9kOSLAb.hy?X.gC2xiO!j2e'3xpRUDUwt5;AebE92xQ'YV389U!gvLMWJlCwyCI.7ulytgMGhhUZBt;DLp8LBTa1vuykEv'xJ1.VS!8mF:5rSMQKWt74;6Be6fTR-LTOM;STjAXhPlxhp.0'CF!A,2R-RZdkFCm5Fs0USbUrZ?jfRp!T;enZVpFoXFzJ7AbtH,qIpLReHUB9veqB22z?l1AsYM!H;aNGrrKWrWakfkXMDn8DpnRn.SOfsVZ?edazdGUyUp4RlIHB4X.!2NBreKUY:JLfzy;2n2fV5OufX2SoKHZ0yxCEbW5r0GIpKX,odBBeYmLhK3WhwBJs7nmdUJ.F13Z5.fwNfuXBQxdVM7L:-bN9EC-oTk6QESLgpjEWe7m 7'b,ym7Ff4Ga9N3dBRPd9eHqJGTV18a?II tWJkIXKMr:w'tLMUtqG?OMkbt;z'MxBWMfr:Yka6wH8VOXIqr9io08JB0d01H4uukdfAtoNGQPVL3h?IkRpqNG9mIm-VI.US3GAGOxPM!DhQ3fwVKBneFuIv82L!dofZC!vBPbAo2Jc;?y-IWyZfqGgmVCHR''eQMjBpoBgIIrBu9ANcgu7t;h4ZcI9 u' NWwVsW.IZ",
+        "expectedOutput": "148",
+        "weight": 1
+      }
+    ],
+    "solutions": {
+      "50": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[1005];\n    if (fgets(s, sizeof(s), stdin) == NULL) {\n        s[0] = '\\0';\n    }\n    size_t len = strlen(s);\n    if (len > 0 && s[len - 1] == '\\n') {\n        s[len - 1] = '\\0';\n    }\n\n    int count = 0;\n    for (size_t i = 0; s[i] != '\\0'; i++) {\n        char c = s[i];\n        if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' ||\n            c == 'A' || c == 'E' || c == 'I' || c == 'O' || c == 'U') {\n            count++;\n        }\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}\n",
+      "54": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string s;\n    std::getline(std::cin, s);\n\n    const std::string vowels = \"aeiouAEIOU\";\n    int count = 0;\n    for (std::size_t i = 0; i < s.size(); ++i) {\n        if (vowels.find(s[i]) != std::string::npos) {\n            ++count;\n        }\n    }\n    std::cout << count << std::endl;\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.hasNextLine() ? sc.nextLine() : \"\";\n\n        int count = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = Character.toLowerCase(s.charAt(i));\n            if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u') {\n                count++;\n            }\n        }\n        System.out.println(count);\n    }\n}\n",
+      "63": "const s = require('fs').readFileSync(0, 'utf8').split('\\n')[0];\n\nlet count = 0;\nfor (let i = 0; i < s.length; i++) {\n  if ('aeiouAEIOU'.indexOf(s[i]) !== -1) {\n    count++;\n  }\n}\nconsole.log(count);\n",
+      "71": "import sys\n\ns = sys.stdin.readline().rstrip('\\n')\n\nprint(sum(1 for ch in s if ch in 'aeiouAEIOU'))\n",
+      "73": "use std::io;\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    let s = input.trim_end_matches('\\n').trim_end_matches('\\r');\n\n    let mut count = 0;\n    for c in s.chars() {\n        match c {\n            'a' | 'e' | 'i' | 'o' | 'u' | 'A' | 'E' | 'I' | 'O' | 'U' => count += 1,\n            _ => {}\n        }\n    }\n    println!(\"{}\", count);\n}\n"
+    },
+    "wrongSolutions": {
+      "lowercase-vowels-only": {
+        "languageId": 71,
+        "source": "import sys\n\ns = sys.stdin.readline().rstrip('\\n')\n\n# BUG: only checks lowercase vowels, so uppercase vowels are missed\nprint(sum(1 for ch in s if ch in 'aeiou'))\n",
+        "mustFailAtLeast": 2
+      },
+      "counts-y-as-vowel": {
+        "languageId": 71,
+        "source": "import sys\n\ns = sys.stdin.readline().rstrip('\\n')\n\n# BUG: treats 'y' as a vowel\nprint(sum(1 for ch in s if ch.lower() in 'aeiouy'))\n",
+        "mustFailAtLeast": 2
+      },
+      "reads-first-word-only": {
+        "languageId": 54,
+        "source": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string s;\n    // BUG: cin >> s stops at the first space, so the rest of the line is ignored\n    std::cin >> s;\n\n    const std::string vowels = \"aeiouAEIOU\";\n    int count = 0;\n    for (std::size_t i = 0; i < s.size(); ++i) {\n        if (vowels.find(s[i]) != std::string::npos) {\n            ++count;\n        }\n    }\n    std::cout << count << std::endl;\n    return 0;\n}\n",
+        "mustFailAtLeast": 2
+      }
+    }
+  },
+  {
+    "slug": "character-frequency",
+    "title": "Frequency of a Character",
+    "difficulty": "easy",
+    "timeLimitMs": 2000,
+    "memoryLimitKb": 128000,
+    "allowedLanguages": "50,54,62,63,71,73,74",
+    "description": "## Frequency of a Character\n\nGiven a word and a single character, count how many times that character occurs in the word.\n\nThe comparison is **case-sensitive**: `G` and `g` are treated as two different characters.\n\n### Input\nThe first line contains one word s made up of ASCII letters (a-z, A-Z) and digits (0-9) only, with no spaces.\nThe second line contains a single character c, which is an ASCII letter or a digit.\n\n### Output\nPrint a single integer: the number of times c occurs in s. Print `0` if c never occurs in s.\n\n### Constraints\n- 1 <= |s| <= 1000\n- s contains only ASCII letters and digits, and no spaces\n- c is a single ASCII letter (a-z, A-Z) or digit (0-9)\n- Matching is case-sensitive, so an uppercase letter does not match its lowercase form\n\n### Example\n**Input:**\n```\nprogramming\ng\n```\n**Output:** `2`\n",
+    "starterCode": {
+      "50": "#include <stdio.h>\n\nint main() {\n    char s[1005];\n    char c;\n    scanf(\"%1004s\", s);\n    scanf(\" %c\", &c);\n\n    /* Your code here */\n\n    return 0;\n}\n",
+      "54": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string s;\n    char c;\n    std::cin >> s;\n    std::cin >> c;\n\n    // Your code here\n\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.next();\n        char c = sc.next().charAt(0);\n\n        // Your code here\n    }\n}\n",
+      "63": "const lines = require('fs').readFileSync(0, 'utf8').split('\\n');\nconst s = lines[0].trim();\nconst c = (lines[1] || '').trim();\n\n// Your code here\n",
+      "71": "s = input().strip()\nc = input().strip()\n\n# Your code here\n",
+      "73": "use std::io;\nuse std::io::BufRead;\n\nfn main() {\n    let stdin = io::stdin();\n    let mut lines = stdin.lock().lines();\n    let _s = lines.next().unwrap().unwrap().trim().to_string();\n    let _c = lines.next().unwrap().unwrap().trim().to_string();\n\n    // Your code here\n}\n",
+      "74": "declare const require: any;\n\nconst lines: string[] = require('fs').readFileSync(0, 'utf8').split('\\n');\nconst s: string = lines[0].trim();\nconst c: string = (lines[1] || '').trim();\n\n// Your code here\n"
+    },
+    "cases": [
+      {
+        "ordinal": 1,
+        "kind": "sample",
+        "stdin": "programming\ng",
+        "expectedOutput": "2",
+        "weight": 1
+      },
+      {
+        "ordinal": 2,
+        "kind": "sample",
+        "stdin": "banana\na",
+        "expectedOutput": "3",
+        "weight": 1
+      },
+      {
+        "ordinal": 3,
+        "kind": "sample",
+        "stdin": "abc123\n1",
+        "expectedOutput": "1",
+        "weight": 1
+      },
+      {
+        "ordinal": 4,
+        "kind": "hidden",
+        "stdin": "programming\nz",
+        "expectedOutput": "0",
+        "weight": 1
+      },
+      {
+        "ordinal": 5,
+        "kind": "hidden",
+        "stdin": "aAaAbBa\nA",
+        "expectedOutput": "2",
+        "weight": 1
+      },
+      {
+        "ordinal": 6,
+        "kind": "hidden",
+        "stdin": "xylophonex\nx",
+        "expectedOutput": "2",
+        "weight": 1
+      },
+      {
+        "ordinal": 7,
+        "kind": "hidden",
+        "stdin": "aBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHiaBcDdeFgHi\nD",
+        "expectedOutput": "100",
+        "weight": 1
+      }
+    ],
+    "solutions": {
+      "50": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[1005];\n    char c;\n    scanf(\"%1004s\", s);\n    scanf(\" %c\", &c);\n\n    int count = 0;\n    int n = strlen(s);\n    for (int i = 0; i < n; i++) {\n        if (s[i] == c) count++;\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}\n",
+      "54": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string s;\n    char c;\n    std::cin >> s;\n    std::cin >> c;\n\n    int count = 0;\n    for (size_t i = 0; i < s.size(); i++) {\n        if (s[i] == c) count++;\n    }\n    std::cout << count << std::endl;\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.next();\n        char c = sc.next().charAt(0);\n\n        int count = 0;\n        for (int i = 0; i < s.length(); i++) {\n            if (s.charAt(i) == c) count++;\n        }\n        System.out.println(count);\n    }\n}\n",
+      "63": "const lines = require('fs').readFileSync(0, 'utf8').split('\\n');\nconst s = lines[0].trim();\nconst c = (lines[1] || '').trim();\n\nlet count = 0;\nfor (let i = 0; i < s.length; i++) {\n  if (s[i] === c) count++;\n}\nconsole.log(count);\n",
+      "71": "s = input().strip()\nc = input().strip()\n\ncount = 0\nfor ch in s:\n    if ch == c:\n        count += 1\nprint(count)\n",
+      "73": "use std::io;\nuse std::io::BufRead;\n\nfn main() {\n    let stdin = io::stdin();\n    let mut lines = stdin.lock().lines();\n    let s = lines.next().unwrap().unwrap().trim().to_string();\n    let c = lines.next().unwrap().unwrap().trim().to_string();\n    let target = c.chars().next().unwrap();\n\n    let mut count = 0;\n    for ch in s.chars() {\n        if ch == target {\n            count += 1;\n        }\n    }\n    println!(\"{}\", count);\n}\n"
+    },
+    "wrongSolutions": {
+      "case-insensitive": {
+        "languageId": 71,
+        "source": "s = input().strip()\nc = input().strip()\n\n# BUG: ignores case, so 'G' wrongly matches 'g'\ncount = 0\nfor ch in s.lower():\n    if ch == c.lower():\n        count += 1\nprint(count)\n",
+        "mustFailAtLeast": 1
+      },
+      "skips-last-character": {
+        "languageId": 71,
+        "source": "s = input().strip()\nc = input().strip()\n\n# BUG: range stops one short, so the final character is never checked\ncount = 0\nfor i in range(len(s) - 1):\n    if s[i] == c:\n        count += 1\nprint(count)\n",
+        "mustFailAtLeast": 1
+      },
+      "presence-not-count": {
+        "languageId": 63,
+        "source": "const lines = require('fs').readFileSync(0, 'utf8').split('\\n');\nconst s = lines[0].trim();\nconst c = (lines[1] || '').trim();\n\n// BUG: reports whether the character exists instead of how many times\nconsole.log(s.indexOf(c) >= 0 ? 1 : 0);\n",
+        "mustFailAtLeast": 1
+      }
+    }
+  },
+  {
+    "slug": "sum-of-digits",
+    "title": "Sum of Digits",
+    "difficulty": "easy",
+    "timeLimitMs": 2000,
+    "memoryLimitKb": 128000,
+    "allowedLanguages": "50,54,62,63,71,73,74",
+    "description": "## Sum of Digits\n\nGiven a positive integer N, print the sum of its decimal digits.\n\n### Input\nA single line containing one positive integer N.\n\n### Output\nPrint a single integer: the sum of the decimal digits of N.\n\n### Constraints\n- 1 <= N <= 10^18\n- N can exceed the range of a 32-bit integer, so use a 64-bit integer type (`long long` in C/C++, `long` in Java) or process N as a string of digits.\n\n### Example\n**Input:** `456`  \n**Output:** `15`\n",
+    "starterCode": {
+      "50": "#include <stdio.h>\n\nint main() {\n    long long n;\n    scanf(\"%lld\", &n);\n\n    /* Your code here */\n\n    return 0;\n}\n",
+      "54": "#include <iostream>\nusing namespace std;\n\nint main() {\n    long long n;\n    cin >> n;\n\n    // Your code here\n\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        long n = sc.nextLong();\n\n        // Your code here\n    }\n}\n",
+      "63": "// N can be as large as 10^18, which is beyond JavaScript's safe integer range,\n// so n is read here as a string of digits (you may also use BigInt).\nconst n = require('fs').readFileSync(0, 'utf8').trim();\n\n// Your code here\n",
+      "71": "n = int(input())\n\n# Your code here\n",
+      "73": "use std::io;\n\nfn main() {\n    let mut s = String::new();\n    io::stdin().read_line(&mut s).unwrap();\n    let _n: i64 = s.trim().parse().unwrap();\n\n    // Your code here\n}\n",
+      "74": "declare const require: any;\n\n// N can be as large as 10^18, which is beyond JavaScript's safe integer range,\n// so n is read here as a string of digits (you may also use BigInt).\nconst n: string = require('fs').readFileSync(0, 'utf8').trim();\n\n// Your code here\n"
+    },
+    "cases": [
+      {
+        "ordinal": 1,
+        "kind": "sample",
+        "stdin": "456",
+        "expectedOutput": "15",
+        "weight": 1
+      },
+      {
+        "ordinal": 2,
+        "kind": "sample",
+        "stdin": "100",
+        "expectedOutput": "1",
+        "weight": 1
+      },
+      {
+        "ordinal": 3,
+        "kind": "sample",
+        "stdin": "99",
+        "expectedOutput": "18",
+        "weight": 1
+      },
+      {
+        "ordinal": 4,
+        "kind": "hidden",
+        "stdin": "7",
+        "expectedOutput": "7",
+        "weight": 1
+      },
+      {
+        "ordinal": 5,
+        "kind": "hidden",
+        "stdin": "1000000",
+        "expectedOutput": "1",
+        "weight": 1
+      },
+      {
+        "ordinal": 6,
+        "kind": "hidden",
+        "stdin": "1000000000000000000",
+        "expectedOutput": "1",
+        "weight": 1
+      },
+      {
+        "ordinal": 7,
+        "kind": "hidden",
+        "stdin": "999999999999999999",
+        "expectedOutput": "162",
+        "weight": 1
+      }
+    ],
+    "solutions": {
+      "50": "#include <stdio.h>\n\nint main() {\n    long long n;\n    scanf(\"%lld\", &n);\n    long long sum = 0;\n    while (n > 0) {\n        sum += n % 10;\n        n /= 10;\n    }\n    printf(\"%lld\\n\", sum);\n    return 0;\n}\n",
+      "54": "#include <iostream>\nusing namespace std;\n\nint main() {\n    long long n;\n    cin >> n;\n    long long sum = 0;\n    while (n > 0) {\n        sum += n % 10;\n        n /= 10;\n    }\n    cout << sum << endl;\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        long n = sc.nextLong();\n        long sum = 0;\n        while (n > 0) {\n            sum += n % 10;\n            n /= 10;\n        }\n        System.out.println(sum);\n    }\n}\n",
+      "63": "const digits = require('fs').readFileSync(0, 'utf8').trim();\nlet total = 0;\nfor (let i = 0; i < digits.length; i++) {\n    total += digits.charCodeAt(i) - 48;\n}\nconsole.log(total);\n",
+      "71": "n = int(input())\ntotal = 0\nwhile n > 0:\n    total += n % 10\n    n //= 10\nprint(total)\n",
+      "73": "use std::io;\n\nfn main() {\n    let mut s = String::new();\n    io::stdin().read_line(&mut s).unwrap();\n    let mut n: i64 = s.trim().parse().unwrap();\n    let mut sum: i64 = 0;\n    while n > 0 {\n        sum += n % 10;\n        n /= 10;\n    }\n    println!(\"{}\", sum);\n}\n"
+    },
+    "wrongSolutions": {
+      "cpp-32-bit-int": {
+        "languageId": 54,
+        "mustFailAtLeast": 2,
+        "source": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    cin >> n;\n    int sum = 0;\n    while (n > 0) {\n        sum += n % 10;\n        n /= 10;\n    }\n    cout << sum << endl;\n    return 0;\n}\n"
+      },
+      "js-float-precision": {
+        "languageId": 63,
+        "mustFailAtLeast": 1,
+        "source": "let n = parseInt(require('fs').readFileSync(0, 'utf8').trim(), 10);\nlet total = 0;\nwhile (n > 0) {\n    total += n % 10;\n    n = Math.floor(n / 10);\n}\nconsole.log(total);\n"
+      },
+      "py-digital-root": {
+        "languageId": 71,
+        "mustFailAtLeast": 2,
+        "source": "n = int(input())\nwhile n > 9:\n    total = 0\n    while n > 0:\n        total += n % 10\n        n //= 10\n    n = total\nprint(n)\n"
+      }
+    }
+  },
+  {
+    "slug": "palindrome-string",
+    "title": "Palindrome String",
+    "difficulty": "medium",
+    "timeLimitMs": 2000,
+    "memoryLimitKb": 128000,
+    "allowedLanguages": "50,54,62,63,71,73,74",
+    "description": "## Palindrome String\n\nA palindrome is a string that reads exactly the same forwards and backwards.\nGiven a single word, decide whether it is a palindrome.\n\nThe comparison is **case-sensitive**: an uppercase letter is different from the same\nletter in lowercase. For example `Madam` is **not** a palindrome, because its first\ncharacter `M` is not equal to its last character `m`.\n\n### Input\nA single line containing one word s made up of ASCII letters (a-z, A-Z) and digits (0-9) only, with no spaces.\n\n### Output\nPrint exactly `Palindrome` if s reads the same forwards and backwards, otherwise print exactly `Not Palindrome`.\nThese are the only two accepted outputs and they must be printed with exactly this capitalisation and spelling.\n\n### Constraints\n- 1 <= |s| <= 1000\n- s contains only ASCII letters and digits, and no spaces\n- The check is case-sensitive, so `Madam` must print `Not Palindrome`\n- Solve this without using any built-in reverse function or reversing shortcut (no Python `[::-1]` or `reversed()`, no `StringBuilder.reverse()`, no `std::reverse`, no `Array.prototype.reverse()`); compare characters from both ends instead.\n\n### Example\n**Input:** `madam`  \n**Output:** `Palindrome`\n",
+    "starterCode": {
+      "50": "#include <stdio.h>\n\nint main() {\n    char s[1005];\n    scanf(\"%s\", s);\n\n    /* Your code here */\n\n    return 0;\n}\n",
+      "54": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string s;\n    std::cin >> s;\n\n    // Your code here\n\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.next();\n\n        // Your code here\n    }\n}\n",
+      "63": "const s = require('fs').readFileSync(0, 'utf8').trim();\n\n// Your code here\n",
+      "71": "s = input().strip()\n\n# Your code here\n",
+      "73": "use std::io;\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    let _s = input.trim();\n\n    // Your code here\n}\n",
+      "74": "declare const require: any;\n\nconst s: string = require('fs').readFileSync(0, 'utf8').trim();\n\n// Your code here\n"
+    },
+    "cases": [
+      {
+        "ordinal": 1,
+        "kind": "sample",
+        "stdin": "madam",
+        "expectedOutput": "Palindrome",
+        "weight": 1
+      },
+      {
+        "ordinal": 2,
+        "kind": "sample",
+        "stdin": "hello",
+        "expectedOutput": "Not Palindrome",
+        "weight": 1
+      },
+      {
+        "ordinal": 3,
+        "kind": "sample",
+        "stdin": "abcda",
+        "expectedOutput": "Not Palindrome",
+        "weight": 1
+      },
+      {
+        "ordinal": 4,
+        "kind": "hidden",
+        "stdin": "a",
+        "expectedOutput": "Palindrome",
+        "weight": 1
+      },
+      {
+        "ordinal": 5,
+        "kind": "hidden",
+        "stdin": "abba",
+        "expectedOutput": "Palindrome",
+        "weight": 1
+      },
+      {
+        "ordinal": 6,
+        "kind": "hidden",
+        "stdin": "Madam",
+        "expectedOutput": "Not Palindrome",
+        "weight": 1
+      },
+      {
+        "ordinal": 7,
+        "kind": "hidden",
+        "stdin": "FBI7NjuRAYSlyeb6hUYkJtr2ZcbL8m5KreAHmvahZ7ttIKsBPN8qirz3NfDpxGWwCo1JKafxoIaU25TxJ3ZwTXXCR9vsyK23kUAULFuhwWOf6dCjHJYsPnZDx2dgOgEaQNTevb1j5eRSxf7PegcKfqTr9Jge1ntRwlVSw003nJvXXvCrPv2ZbJ94U1UHWKD7jOA6YaZODwMnwIFnJt9cUQe7uHf2b5iucXnAR4Knq4jxOovQLBrVIHN2cLlXgluduZs445RegbQbdv2VNuPJBiDEpnqNXvYlutQA0WjR32EvTKorFVHJnqaNUEvZaLLXIAV6FkmkUq1hXcpnVRc7Ici8sdBqeNTyRLi7Z9xg1P5gk8uc9b3vWnJVoS4KIvBiYF3acf8PcKUDNYJbHIkDjk9lMnSQ4qvfCnfIUZBSNUP9ErYEtHd6OJP0x8F7q2cHH1i84liyFCIOXCuh6KipENAXy7SXgEbuzwqIqOkZWJyFxRixNIKbbKINxiRxFyJWZkOqIqwzubEgXS7yXANEpiK6huCXOICFyil48i1HHc2q7F8x0PJO6dHtEYrE9PUNSBZUIfnCfvq4QSnMl9kjDkIHbJYNDUKcP8fca3FYiBvIK4SoVJnWv3b9cu8kg5P1gx9Z7iLRyTNeqBds8icI7cRVnpcXh1qUkmkF6VAIXLLaZvEUNaqnJHVFroKTvE23RjW0AQtulYvXNqnpEDiBJPuNV2vdbQbgeR544sZudulgXlLc2NHIVrBLQvoOxj4qnK4RAnXcui5b2fHu7eQUc9tJnFIwnMwDOZaY6AOj7DKWHU1U49JbZ2vPrCvXXvJn300wSVlwRtn1egJ9rTqfKcgeP7fxSRe5j1bveTNQaEgOgd2xDZnPsYJHjCd6fOWwhuFLUAUk32Kysv9RCXXTwZ3JxT52UaIoxfaKJ1oCwWGxpDfN3zriq8NPBsKItt7ZhavmHAerK5m8LbcZ2rtJkYUh6beylSYARujN7IBF",
+        "expectedOutput": "Palindrome",
+        "weight": 1
+      }
+    ],
+    "solutions": {
+      "50": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    char s[1005];\n    if (scanf(\"%1004s\", s) != 1) return 0;\n\n    int i = 0;\n    int j = (int)strlen(s) - 1;\n    int isPal = 1;\n    while (i < j) {\n        if (s[i] != s[j]) { isPal = 0; break; }\n        i++;\n        j--;\n    }\n\n    printf(\"%s\\n\", isPal ? \"Palindrome\" : \"Not Palindrome\");\n    return 0;\n}\n",
+      "54": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string s;\n    std::cin >> s;\n\n    bool isPal = true;\n    int i = 0;\n    int j = (int)s.size() - 1;\n    while (i < j) {\n        if (s[i] != s[j]) { isPal = false; break; }\n        ++i;\n        --j;\n    }\n\n    std::cout << (isPal ? \"Palindrome\" : \"Not Palindrome\") << std::endl;\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.next();\n\n        boolean isPal = true;\n        int i = 0;\n        int j = s.length() - 1;\n        while (i < j) {\n            if (s.charAt(i) != s.charAt(j)) { isPal = false; break; }\n            i++;\n            j--;\n        }\n\n        System.out.println(isPal ? \"Palindrome\" : \"Not Palindrome\");\n    }\n}\n",
+      "63": "const s = require('fs').readFileSync(0, 'utf8').trim();\n\nlet i = 0;\nlet j = s.length - 1;\nlet isPal = true;\nwhile (i < j) {\n  if (s[i] !== s[j]) { isPal = false; break; }\n  i++;\n  j--;\n}\n\nconsole.log(isPal ? 'Palindrome' : 'Not Palindrome');\n",
+      "71": "s = input().strip()\n\ni = 0\nj = len(s) - 1\nis_pal = True\nwhile i < j:\n    if s[i] != s[j]:\n        is_pal = False\n        break\n    i += 1\n    j -= 1\n\nprint(\"Palindrome\" if is_pal else \"Not Palindrome\")\n",
+      "73": "use std::io;\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    let s: &[u8] = input.trim().as_bytes();\n\n    let mut is_pal = true;\n    let n = s.len();\n    let mut i = 0;\n    while i * 2 + 1 < n {\n        if s[i] != s[n - 1 - i] {\n            is_pal = false;\n            break;\n        }\n        i += 1;\n    }\n\n    if is_pal {\n        println!(\"Palindrome\");\n    } else {\n        println!(\"Not Palindrome\");\n    }\n}\n"
+    },
+    "wrongSolutions": {
+      "case-insensitive": {
+        "languageId": 71,
+        "source": "s = input().strip().lower()\n\ni = 0\nj = len(s) - 1\nis_pal = True\nwhile i < j:\n    if s[i] != s[j]:\n        is_pal = False\n        break\n    i += 1\n    j -= 1\n\nprint(\"Palindrome\" if is_pal else \"Not Palindrome\")\n",
+        "mustFailAtLeast": 1
+      },
+      "first-last-only": {
+        "languageId": 71,
+        "source": "s = input().strip()\n\nif s[0] == s[len(s) - 1]:\n    print(\"Palindrome\")\nelse:\n    print(\"Not Palindrome\")\n",
+        "mustFailAtLeast": 1
+      }
+    }
+  },
+  {
+    "slug": "factorial-of-a-number",
+    "title": "Factorial Using a Function",
+    "difficulty": "medium",
+    "timeLimitMs": 2000,
+    "memoryLimitKb": 128000,
+    "allowedLanguages": "50,54,62,63,71,73,74",
+    "description": "## Factorial Using a Function\n\nWrite a program that uses a separate function to calculate the factorial of a given non-negative integer N.\n\nThe factorial of N, written N!, is the product of all the integers from 1 to N. For example, 5! = 5 x 4 x 3 x 2 x 1 = 120. By definition, 0! = 1.\n\n### Input\nA single line containing one integer N.\n\n### Output\nPrint a single integer: the value of N!.\n\n### Constraints\n- 0 <= N <= 20\n- 0! = 1, so the answer for N = 0 is 1\n- The answer always fits in a 64-bit signed integer (20! = 2432902008176640000), so use a 64-bit integer type: `long long` in C/C++, `long` in Java, `i64` in Rust. In JavaScript/TypeScript use `BigInt`, because 20! is larger than `Number.MAX_SAFE_INTEGER`.\n- Compute the factorial inside a separate function that your main program calls, instead of writing the loop inline.\n\n### Example\n**Input:** `5`  \n**Output:** `120`\n",
+    "starterCode": {
+      "50": "#include <stdio.h>\n\nlong long factorial(int n) {\n    /* Your code here */\n    return 0;\n}\n\nint main() {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%lld\\n\", factorial(n));\n    return 0;\n}\n",
+      "54": "#include <iostream>\n\nlong long factorial(int n) {\n    // Your code here\n    return 0;\n}\n\nint main() {\n    int n;\n    std::cin >> n;\n    std::cout << factorial(n) << std::endl;\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    static long factorial(int n) {\n        // Your code here\n        return 0;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        System.out.println(factorial(n));\n    }\n}\n",
+      "63": "// Note: 20! is larger than Number.MAX_SAFE_INTEGER, so use BigInt here.\nfunction factorial(n) {\n  // Your code here\n  return BigInt(0);\n}\n\nconst n = parseInt(require('fs').readFileSync(0, 'utf8').trim(), 10);\nconsole.log(factorial(n).toString());\n",
+      "71": "def factorial(n):\n    # Your code here\n    return 0\n\n\nn = int(input())\nprint(factorial(n))\n",
+      "73": "use std::io;\n\nfn factorial(n: i64) -> i64 {\n    // Your code here\n    let _ = n;\n    0\n}\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    let n: i64 = input.trim().parse().unwrap();\n    println!(\"{}\", factorial(n));\n}\n",
+      "74": "declare const require: any;\ndeclare const BigInt: any;\n\n// Note: 20! is larger than Number.MAX_SAFE_INTEGER, so use BigInt here.\nfunction factorial(n: number): any {\n  // Your code here\n  return BigInt(0);\n}\n\nconst n: number = parseInt(require('fs').readFileSync(0, 'utf8').trim(), 10);\nconsole.log(String(factorial(n)));\n"
+    },
+    "cases": [
+      {
+        "ordinal": 1,
+        "kind": "sample",
+        "stdin": "5",
+        "expectedOutput": "120",
+        "weight": 1
+      },
+      {
+        "ordinal": 2,
+        "kind": "sample",
+        "stdin": "3",
+        "expectedOutput": "6",
+        "weight": 1
+      },
+      {
+        "ordinal": 3,
+        "kind": "sample",
+        "stdin": "10",
+        "expectedOutput": "3628800",
+        "weight": 1
+      },
+      {
+        "ordinal": 4,
+        "kind": "hidden",
+        "stdin": "0",
+        "expectedOutput": "1",
+        "weight": 1
+      },
+      {
+        "ordinal": 5,
+        "kind": "hidden",
+        "stdin": "1",
+        "expectedOutput": "1",
+        "weight": 1
+      },
+      {
+        "ordinal": 6,
+        "kind": "hidden",
+        "stdin": "13",
+        "expectedOutput": "6227020800",
+        "weight": 1
+      },
+      {
+        "ordinal": 7,
+        "kind": "hidden",
+        "stdin": "20",
+        "expectedOutput": "2432902008176640000",
+        "weight": 1
+      }
+    ],
+    "solutions": {
+      "50": "#include <stdio.h>\n\nlong long factorial(int n) {\n    long long result = 1;\n    int i;\n    for (i = 2; i <= n; i++) {\n        result *= i;\n    }\n    return result;\n}\n\nint main() {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%lld\\n\", factorial(n));\n    return 0;\n}\n",
+      "54": "#include <iostream>\n\nlong long factorial(int n) {\n    long long result = 1;\n    for (int i = 2; i <= n; ++i) {\n        result *= i;\n    }\n    return result;\n}\n\nint main() {\n    int n;\n    std::cin >> n;\n    std::cout << factorial(n) << std::endl;\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    static long factorial(int n) {\n        long result = 1L;\n        for (int i = 2; i <= n; i++) {\n            result *= i;\n        }\n        return result;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        System.out.println(factorial(n));\n    }\n}\n",
+      "63": "// 20! exceeds Number.MAX_SAFE_INTEGER, so BigInt is required.\nfunction factorial(n) {\n  let result = BigInt(1);\n  for (let i = 2; i <= n; i++) {\n    result = result * BigInt(i);\n  }\n  return result;\n}\n\nconst n = parseInt(require('fs').readFileSync(0, 'utf8').trim(), 10);\nconsole.log(factorial(n).toString());\n",
+      "71": "def factorial(n):\n    result = 1\n    for i in range(2, n + 1):\n        result *= i\n    return result\n\n\nn = int(input())\nprint(factorial(n))\n",
+      "73": "use std::io;\n\nfn factorial(n: i64) -> i64 {\n    let mut result: i64 = 1;\n    let mut i: i64 = 2;\n    while i <= n {\n        result *= i;\n        i += 1;\n    }\n    result\n}\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    let n: i64 = input.trim().parse().unwrap();\n    println!(\"{}\", factorial(n));\n}\n"
+    },
+    "wrongSolutions": {
+      "int32-overflow": {
+        "languageId": 54,
+        "source": "#include <iostream>\n\nint factorial(int n) {\n    int result = 1;\n    for (int i = 2; i <= n; ++i) {\n        result *= i;\n    }\n    return result;\n}\n\nint main() {\n    int n;\n    std::cin >> n;\n    std::cout << factorial(n) << std::endl;\n    return 0;\n}\n",
+        "mustFailAtLeast": 2
+      },
+      "missing-zero-base-case": {
+        "languageId": 71,
+        "source": "def factorial(n):\n    result = n\n    for i in range(1, n):\n        result *= i\n    return result\n\n\nn = int(input())\nprint(factorial(n))\n",
+        "mustFailAtLeast": 1
+      },
+      "off-by-one-loop": {
+        "languageId": 62,
+        "source": "import java.util.Scanner;\n\npublic class Main {\n    static long factorial(int n) {\n        long result = 1L;\n        for (int i = 2; i < n; i++) {\n            result *= i;\n        }\n        return result;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        System.out.println(factorial(n));\n    }\n}\n",
+        "mustFailAtLeast": 3
+      }
+    }
+  },
+  {
+    "slug": "prime-number-check",
+    "title": "Prime Number Check",
+    "difficulty": "medium",
+    "timeLimitMs": 2000,
+    "memoryLimitKb": 128000,
+    "allowedLanguages": "50,54,62,63,71,73,74",
+    "description": "## Prime Number Check\n\nWrite a program that uses a separate function to determine whether a given integer `N` is a prime number.\n\nA prime number is a whole number greater than 1 whose only positive divisors are 1 and itself. Mind the two classic edge cases: `1` is **not** prime, and `2` **is** prime (it is the smallest prime number).\n\n### Input\nA single line containing one integer `N`.\n\n### Output\nPrint exactly `Prime` if `N` is a prime number, otherwise print exactly `Not Prime`.\n\nThe output is case-sensitive and the only two accepted outputs are the exact strings `Prime` and `Not Prime`.\n\n### Constraints\n- 1 <= N <= 1000000000 (10^9)\n- Perform the primality test inside its own function (for example `is_prime(n)`) and call that function from your main program.\n- N can be as large as 10^9, so testing every divisor from 2 up to N - 1 is too slow and will exceed the time limit. Test divisors only up to the square root of N.\n- In C, C++ and Java use a 64-bit integer type (`long long` / `long`) for the divisor, because `i * i` overflows a 32-bit `int` near the upper bound of N.\n\n### Example\n**Input:** `7`  \n**Output:** `Prime`\n",
+    "starterCode": {
+      "50": "#include <stdio.h>\n\nint is_prime(long long n) {\n    /* Your code here */\n\n    return 0;\n}\n\nint main() {\n    long long n;\n    scanf(\"%lld\", &n);\n\n    /* Your code here */\n\n    return 0;\n}\n",
+      "54": "#include <iostream>\nusing namespace std;\n\nbool isPrime(long long n) {\n    // Your code here\n\n    return false;\n}\n\nint main() {\n    long long n;\n    cin >> n;\n\n    // Your code here\n\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    static boolean isPrime(long n) {\n        // Your code here\n\n        return false;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        long n = sc.nextLong();\n\n        // Your code here\n    }\n}\n",
+      "63": "function isPrime(n) {\n  // Your code here\n\n  return false;\n}\n\nconst n = parseInt(require('fs').readFileSync(0, 'utf8').trim(), 10);\n\n// Your code here\n",
+      "71": "def is_prime(n):\n    # Your code here\n\n    return False\n\n\nn = int(input())\n\n# Your code here\n",
+      "73": "use std::io;\n\nfn is_prime(_n: u64) -> bool {\n    // Your code here\n\n    false\n}\n\nfn main() {\n    let mut s = String::new();\n    io::stdin().read_line(&mut s).unwrap();\n    let _n: u64 = s.trim().parse().unwrap();\n\n    // Your code here\n}\n",
+      "74": "declare const require: any;\n\nfunction isPrime(n: number): boolean {\n  // Your code here\n\n  return false;\n}\n\nconst n: number = parseInt(require('fs').readFileSync(0, 'utf8').trim(), 10);\n\n// Your code here\n"
+    },
+    "cases": [
+      {
+        "ordinal": 1,
+        "kind": "sample",
+        "stdin": "7",
+        "expectedOutput": "Prime",
+        "weight": 1
+      },
+      {
+        "ordinal": 2,
+        "kind": "sample",
+        "stdin": "10",
+        "expectedOutput": "Not Prime",
+        "weight": 1
+      },
+      {
+        "ordinal": 3,
+        "kind": "sample",
+        "stdin": "13",
+        "expectedOutput": "Prime",
+        "weight": 1
+      },
+      {
+        "ordinal": 4,
+        "kind": "hidden",
+        "stdin": "1",
+        "expectedOutput": "Not Prime",
+        "weight": 1
+      },
+      {
+        "ordinal": 5,
+        "kind": "hidden",
+        "stdin": "2",
+        "expectedOutput": "Prime",
+        "weight": 1
+      },
+      {
+        "ordinal": 6,
+        "kind": "hidden",
+        "stdin": "999999937",
+        "expectedOutput": "Prime",
+        "weight": 1
+      },
+      {
+        "ordinal": 7,
+        "kind": "hidden",
+        "stdin": "49",
+        "expectedOutput": "Not Prime",
+        "weight": 1
+      }
+    ],
+    "solutions": {
+      "50": "#include <stdio.h>\n\nint is_prime(long long n) {\n    if (n < 2) return 0;\n    if (n % 2 == 0) return n == 2;\n    for (long long i = 3; i * i <= n; i += 2) {\n        if (n % i == 0) return 0;\n    }\n    return 1;\n}\n\nint main() {\n    long long n;\n    scanf(\"%lld\", &n);\n    printf(\"%s\\n\", is_prime(n) ? \"Prime\" : \"Not Prime\");\n    return 0;\n}\n",
+      "54": "#include <iostream>\nusing namespace std;\n\nbool isPrime(long long n) {\n    if (n < 2) return false;\n    if (n % 2 == 0) return n == 2;\n    for (long long i = 3; i * i <= n; i += 2) {\n        if (n % i == 0) return false;\n    }\n    return true;\n}\n\nint main() {\n    long long n;\n    cin >> n;\n    cout << (isPrime(n) ? \"Prime\" : \"Not Prime\") << endl;\n    return 0;\n}\n",
+      "62": "import java.util.Scanner;\n\npublic class Main {\n    static boolean isPrime(long n) {\n        if (n < 2) return false;\n        if (n % 2 == 0) return n == 2;\n        for (long i = 3; i * i <= n; i += 2) {\n            if (n % i == 0) return false;\n        }\n        return true;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        long n = sc.nextLong();\n        System.out.println(isPrime(n) ? \"Prime\" : \"Not Prime\");\n    }\n}\n",
+      "63": "function isPrime(n) {\n  if (n < 2) return false;\n  if (n % 2 === 0) return n === 2;\n  for (var i = 3; i * i <= n; i += 2) {\n    if (n % i === 0) return false;\n  }\n  return true;\n}\n\nconst n = parseInt(require('fs').readFileSync(0, 'utf8').trim(), 10);\nconsole.log(isPrime(n) ? 'Prime' : 'Not Prime');\n",
+      "71": "def is_prime(n):\n    if n < 2:\n        return False\n    if n % 2 == 0:\n        return n == 2\n    i = 3\n    while i * i <= n:\n        if n % i == 0:\n            return False\n        i += 2\n    return True\n\n\nn = int(input())\nprint(\"Prime\" if is_prime(n) else \"Not Prime\")\n"
+    },
+    "wrongSolutions": {
+      "naive-linear-scan": {
+        "languageId": 71,
+        "source": "def is_prime(n):\n    # BUG: trial-divides by every number from 2 up to n - 1, which is O(n)\n    # and far too slow when n is close to 10^9.\n    if n < 2:\n        return False\n    for i in range(2, n):\n        if n % i == 0:\n            return False\n    return True\n\n\nn = int(input())\nprint(\"Prime\" if is_prime(n) else \"Not Prime\")\n",
+        "mustFailAtLeast": 1
+      },
+      "sqrt-bound-off-by-one": {
+        "languageId": 54,
+        "source": "#include <iostream>\nusing namespace std;\n\nbool isPrime(long long n) {\n    if (n < 2) return false;\n    // BUG: loop bound is i * i < n instead of i * i <= n, so a perfect square\n    // of a prime (4, 9, 25, 49, ...) is never divided by its own square root\n    // and is wrongly reported as prime.\n    for (long long i = 2; i * i < n; i++) {\n        if (n % i == 0) return false;\n    }\n    return true;\n}\n\nint main() {\n    long long n;\n    cin >> n;\n    cout << (isPrime(n) ? \"Prime\" : \"Not Prime\") << endl;\n    return 0;\n}\n",
+        "mustFailAtLeast": 1
+      },
+      "treats-one-as-prime": {
+        "languageId": 62,
+        "source": "import java.util.Scanner;\n\npublic class Main {\n    static boolean isPrime(long n) {\n        // BUG: no n < 2 guard, so n = 1 never enters the loop and is reported\n        // as prime.\n        for (long i = 2; i * i <= n; i++) {\n            if (n % i == 0) return false;\n        }\n        return true;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        long n = sc.nextLong();\n        System.out.println(isPrime(n) ? \"Prime\" : \"Not Prime\");\n    }\n}\n",
+        "mustFailAtLeast": 1
+      }
+    }
+  }
+]

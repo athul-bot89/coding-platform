@@ -1,0 +1,202 @@
+{
+  "trapping-rain-water": [
+    {
+      "ordinal": 1,
+      "kind": "sample",
+      "stdin": "12\n0 1 0 2 1 0 1 3 2 1 2 1",
+      "expectedOutput": "6"
+    },
+    {
+      "ordinal": 2,
+      "kind": "sample",
+      "stdin": "6\n4 2 0 3 2 5",
+      "expectedOutput": "9"
+    },
+    {
+      "ordinal": 3,
+      "kind": "sample",
+      "stdin": "1\n5",
+      "expectedOutput": "0"
+    },
+    {
+      "ordinal": 4,
+      "kind": "hidden",
+      "stdin": "2\n1 1",
+      "expectedOutput": "0"
+    },
+    {
+      "ordinal": 5,
+      "kind": "hidden",
+      "stdin": "5\n5 4 3 2 1",
+      "expectedOutput": "0"
+    },
+    {
+      "ordinal": 6,
+      "kind": "hidden",
+      "stdin": "5\n1 2 3 4 5",
+      "expectedOutput": "0"
+    },
+    {
+      "ordinal": 7,
+      "kind": "hidden",
+      "stdin": "7\n3 0 0 2 0 4 0",
+      "expectedOutput": "10"
+    },
+    {
+      "ordinal": 8,
+      "kind": "hidden",
+      "stdin": "10\n5 2 1 2 1 5 3 1 2 1",
+      "expectedOutput": "15"
+    }
+  ],
+  "largest-rectangle-histogram": [
+    {
+      "ordinal": 1,
+      "kind": "sample",
+      "stdin": "6\n2 1 5 6 2 3",
+      "expectedOutput": "10"
+    },
+    {
+      "ordinal": 2,
+      "kind": "sample",
+      "stdin": "2\n2 4",
+      "expectedOutput": "4"
+    },
+    {
+      "ordinal": 3,
+      "kind": "sample",
+      "stdin": "1\n7",
+      "expectedOutput": "7"
+    },
+    {
+      "ordinal": 4,
+      "kind": "hidden",
+      "stdin": "5\n1 1 1 1 1",
+      "expectedOutput": "5"
+    },
+    {
+      "ordinal": 5,
+      "kind": "hidden",
+      "stdin": "6\n6 5 4 3 2 1",
+      "expectedOutput": "12"
+    },
+    {
+      "ordinal": 6,
+      "kind": "hidden",
+      "stdin": "6\n1 2 3 4 5 6",
+      "expectedOutput": "12"
+    },
+    {
+      "ordinal": 7,
+      "kind": "hidden",
+      "stdin": "8\n2 1 2 3 1 2 1 2",
+      "expectedOutput": "8"
+    },
+    {
+      "ordinal": 8,
+      "kind": "hidden",
+      "stdin": "9\n0 9 0 8 0 7 0 6 0",
+      "expectedOutput": "9"
+    }
+  ],
+  "sliding-window-maximum": [
+    {
+      "ordinal": 1,
+      "kind": "sample",
+      "stdin": "8 3\n1 3 -1 -3 5 3 6 7",
+      "expectedOutput": "3 3 5 5 6 7"
+    },
+    {
+      "ordinal": 2,
+      "kind": "sample",
+      "stdin": "1 1\n1",
+      "expectedOutput": "1"
+    },
+    {
+      "ordinal": 3,
+      "kind": "sample",
+      "stdin": "3 2\n7 2 4",
+      "expectedOutput": "7 4"
+    },
+    {
+      "ordinal": 4,
+      "kind": "hidden",
+      "stdin": "5 1\n4 -2 7 0 1",
+      "expectedOutput": "4 -2 7 0 1"
+    },
+    {
+      "ordinal": 5,
+      "kind": "hidden",
+      "stdin": "6 6\n5 3 8 1 9 2",
+      "expectedOutput": "9"
+    },
+    {
+      "ordinal": 6,
+      "kind": "hidden",
+      "stdin": "10 4\n1 3 -1 -3 5 3 6 7 -2 4",
+      "expectedOutput": "3 5 5 6 7 7 7"
+    },
+    {
+      "ordinal": 7,
+      "kind": "hidden",
+      "stdin": "7 2\n-1 -3 -5 -3 -1 -3 -5",
+      "expectedOutput": "-1 -3 -3 -1 -1 -3"
+    },
+    {
+      "ordinal": 8,
+      "kind": "hidden",
+      "stdin": "9 3\n10 9 8 7 6 5 4 3 2",
+      "expectedOutput": "10 9 8 7 6 5 4"
+    }
+  ],
+  "merge-k-sorted-lists": [
+    {
+      "ordinal": 1,
+      "kind": "sample",
+      "stdin": "3\n3 1 4 5\n3 1 3 4\n2 2 6",
+      "expectedOutput": "1 1 2 3 4 4 5 6"
+    },
+    {
+      "ordinal": 2,
+      "kind": "sample",
+      "stdin": "1\n0",
+      "expectedOutput": ""
+    },
+    {
+      "ordinal": 3,
+      "kind": "sample",
+      "stdin": "2\n0\n3 2 2 2",
+      "expectedOutput": "2 2 2"
+    },
+    {
+      "ordinal": 4,
+      "kind": "hidden",
+      "stdin": "4\n1 5\n0\n3 1 2 3\n4 0 0 0 0",
+      "expectedOutput": "0 0 0 0 1 2 3 5"
+    },
+    {
+      "ordinal": 5,
+      "kind": "hidden",
+      "stdin": "1\n5 -5 -3 -1 0 2",
+      "expectedOutput": "-5 -3 -1 0 2"
+    },
+    {
+      "ordinal": 6,
+      "kind": "hidden",
+      "stdin": "5\n0\n0\n0\n0\n0",
+      "expectedOutput": ""
+    },
+    {
+      "ordinal": 7,
+      "kind": "hidden",
+      "stdin": "3\n2 -4 -4\n2 -4 0\n1 -4",
+      "expectedOutput": "-4 -4 -4 -4 0"
+    },
+    {
+      "ordinal": 8,
+      "kind": "hidden",
+      "stdin": "6\n2 1 100\n1 50\n3 -10 -10 -10\n1 0\n2 25 75\n0",
+      "expectedOutput": "-10 -10 -10 0 1 25 50 75 100"
+    }
+  ]
+}

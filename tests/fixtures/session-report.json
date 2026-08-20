@@ -1,0 +1,5132 @@
+{
+  "id": "cmszzqmgl000213ucr8fg7vue",
+  "assessmentTitle": "botangelos intership 2026 coding round",
+  "assessmentId": "cmsrkhgbl001oa5t44kxdg7s2",
+  "candidateName": "Farha Jebin",
+  "candidateEmail": "farhajebin02@gmail.com",
+  "signedInAs": "farhajebin02@gmail.com",
+  "signedInName": "Farha Jebin",
+  "image": "https://lh3.googleusercontent.com/a/ACg8ocLN4CSYcfv3Xaf07XOb1r-SIfqQaitSzjIH--YTCfeDCdEvWg=s96-c",
+  "state": "submitted",
+  "startedAt": "2026-08-19T11:11:00.200Z",
+  "endsAt": "2026-08-19T12:41:10.638Z",
+  "submittedAt": "2026-08-19T12:22:11.438Z",
+  "lastSeenAt": "2026-08-19T12:22:00.507Z",
+  "durationMinutes": 90,
+  "elapsedMs": 4271238,
+  "creditedMs": 10438,
+  "violationCount": 0,
+  "maxViolations": 5,
+  "totalScore": 586,
+  "maxScore": 1000,
+  "totals": {
+    "questions": 10,
+    "attempted": 8,
+    "solved": 5,
+    "partial": 1,
+    "untouched": 2,
+    "submissions": 24,
+    "runs": 41,
+    "keystrokes": 931,
+    "charsTyped": 1401,
+    "activeTypingMs": 627805,
+    "unattributedMs": 0,
+    "idleCapMs": 300000,
+    "medianGradingMs": 9000
+  },
+  "events": [
+    {
+      "id": "cmszzrhl4008g3i8oqkhpbz2c",
+      "event": "connection_lost",
+      "detail": "offline for 6s",
+      "counted": false,
+      "atMs": 30363,
+      "createdAt": "2026-08-19T11:11:30.563Z"
+    },
+    {
+      "id": "cmszzrlmm0002e44kzrdzufr8",
+      "event": "connection_restored",
+      "detail": null,
+      "counted": false,
+      "atMs": 36617,
+      "createdAt": "2026-08-19T11:11:36.817Z"
+    },
+    {
+      "id": "cmszzywe8003913uccj2wamau",
+      "event": "connection_lost",
+      "detail": "offline for 4s",
+      "counted": false,
+      "atMs": 376927,
+      "createdAt": "2026-08-19T11:17:17.127Z"
+    },
+    {
+      "id": "cmszzyytq003g13ucbxk3p8ua",
+      "event": "connection_restored",
+      "detail": null,
+      "counted": false,
+      "atMs": 380908,
+      "createdAt": "2026-08-19T11:17:21.108Z"
+    },
+    {
+      "id": "cmt00lnag0049neddylaajg7r",
+      "event": "connection_lost",
+      "detail": "offline for 8s",
+      "counted": false,
+      "atMs": 1437865,
+      "createdAt": "2026-08-19T11:34:58.065Z"
+    },
+    {
+      "id": "cmt00lp3r00d3e44kuyc92rxu",
+      "event": "connection_restored",
+      "detail": null,
+      "counted": false,
+      "atMs": 1445567,
+      "createdAt": "2026-08-19T11:35:05.767Z"
+    }
+  ],
+  "questions": [
+    {
+      "problemId": "cmsk5yqst0009z9ebjwy5z6xp",
+      "title": "Largest of Three Numbers",
+      "slug": "largest-of-three",
+      "difficulty": "easy",
+      "ordinal": 1,
+      "points": 100,
+      "earned": 100,
+      "submissions": 1,
+      "runCount": 1,
+      "totalTestCases": 9,
+      "timeLimitMs": 2000,
+      "memoryLimitKb": 128000,
+      "languages": [
+        71
+      ],
+      "time": {
+        "estimatedMs": 69090,
+        "firstTouchMs": 44442,
+        "lastTouchMs": 69090,
+        "markers": 3,
+        "activeTypingMs": 10903,
+        "timeToBestMs": 69090,
+        "timeToFirstSubmitMs": 69090,
+        "timeToSolveMs": 69090
+      },
+      "bestAttempt": {
+        "id": "cmszzs3m1000ee44k2mqczx7a",
+        "languageId": 71,
+        "sourceCode": "a, b, c = map(int, input().split())\nprint(max(a,b,c))\n\n# Your code here\n",
+        "score": 9,
+        "maxScore": 9,
+        "atMs": 69090,
+        "casesPassed": 9,
+        "casesTotal": 9,
+        "runs": [
+          {
+            "ordinal": 1,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3296,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 2,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3160,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 3,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3300,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 4,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3220,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 5,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.022,
+            "memoryKb": 3316,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 6,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.022,
+            "memoryKb": 3264,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 7,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3156,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 8,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3308,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 9,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.015,
+            "memoryKb": 3236,
+            "hasOutput": false
+          }
+        ]
+      },
+      "history": [
+        {
+          "id": "cmszzrkle008k3i8o7ltup02y",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "a, b, c = map(int, input().split())\nprint(max(a,b,c))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:11:44.642Z",
+          "finishedAt": "2026-08-19T11:11:54.606Z",
+          "atMs": 44442,
+          "gradedInMs": 9964,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 4068,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 4068,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmszzs3m1000ee44k2mqczx7a",
+          "kind": "submit",
+          "state": "done",
+          "score": 9,
+          "maxScore": 9,
+          "languageId": 71,
+          "sourceCode": "a, b, c = map(int, input().split())\nprint(max(a,b,c))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:12:09.290Z",
+          "finishedAt": "2026-08-19T11:12:19.571Z",
+          "atMs": 69090,
+          "gradedInMs": 10281,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3316,
+          "verdicts": {
+            "total": 9,
+            "passed": 9,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 9
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3296,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3160,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3300,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3220,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3316,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3264,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3156,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 8,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3308,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 9,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.015,
+              "memoryKb": 3236,
+              "hasOutput": false
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "code": "a, b, c = map(int, input().split())\nprint(max(a,b,c))\n\n# Your code here\n",
+        "languageId": 71,
+        "updatedAt": "2026-08-19T11:12:09.089Z",
+        "atMs": 68889,
+        "differsFromLastSubmission": false
+      },
+      "integrity": {
+        "keystrokes": 16,
+        "charsTyped": 18,
+        "activeMs": 10903,
+        "largestInsertion": 2,
+        "burstCount": 0,
+        "burstChars": 0,
+        "bursts": [],
+        "threshold": 40
+      },
+      "timeline": []
+    },
+    {
+      "problemId": "cmsk5yrfp0010z9ebdrkrit56",
+      "title": "Reverse a String",
+      "slug": "reverse-a-string",
+      "difficulty": "easy",
+      "ordinal": 2,
+      "points": 100,
+      "earned": 100,
+      "submissions": 1,
+      "runCount": 3,
+      "totalTestCases": 9,
+      "timeLimitMs": 2000,
+      "memoryLimitKb": 128000,
+      "languages": [
+        71
+      ],
+      "time": {
+        "estimatedMs": 168433,
+        "firstTouchMs": 111852,
+        "lastTouchMs": 237523,
+        "markers": 5,
+        "activeTypingMs": 47513,
+        "timeToBestMs": 237523,
+        "timeToFirstSubmitMs": 237523,
+        "timeToSolveMs": 237523
+      },
+      "bestAttempt": {
+        "id": "cmszzvpkr00bx3i8ow05uyseq",
+        "languageId": 71,
+        "sourceCode": "s = input().strip()\nrev=\"\"\nfor ch in s:\n    rev=ch+rev\nprint(rev)    \n\n# Your code here\n",
+        "score": 9,
+        "maxScore": 9,
+        "atMs": 237523,
+        "casesPassed": 9,
+        "casesTotal": 9,
+        "runs": [
+          {
+            "ordinal": 1,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3208,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 2,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3196,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 3,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.022,
+            "memoryKb": 3328,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 4,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.022,
+            "memoryKb": 3568,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 5,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.025,
+            "memoryKb": 3256,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 6,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.025,
+            "memoryKb": 3236,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 7,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3092,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 8,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3324,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 9,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.1,
+            "memoryKb": 3216,
+            "hasOutput": false
+          }
+        ]
+      },
+      "history": [
+        {
+          "id": "cmszzt1jy00963i8odiffat9k",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "s = input().strip()\nprint(s[:-1])\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:12:52.052Z",
+          "finishedAt": "2026-08-19T11:13:02.070Z",
+          "atMs": 111852,
+          "gradedInMs": 10018,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3320,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.019,
+              "memoryKb": 3168,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3320,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3228,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmszzucq700a63i8oysp5y6rt",
+          "kind": "run",
+          "state": "done",
+          "score": 2,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "s = input().strip()\nrev=\"\"\nfor ch in s:\n    rev+=ch\nprint(rev)    \n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:13:54.126Z",
+          "finishedAt": "2026-08-19T11:14:01.723Z",
+          "atMs": 173926,
+          "gradedInMs": 7597,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.022,
+          "peakMemoryKb": 3332,
+          "verdicts": {
+            "total": 3,
+            "passed": 2,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 2,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3312,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3332,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3228,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmszzveax00bj3i8ovk0ja78u",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "s = input().strip()\nrev=\"\"\nfor ch in s:\n    rev=ch+rev\nprint(rev)    \n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:14:42.965Z",
+          "finishedAt": "2026-08-19T11:14:50.805Z",
+          "atMs": 222765,
+          "gradedInMs": 7840,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3260,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3084,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.018,
+              "memoryKb": 3212,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmszzvpkr00bx3i8ow05uyseq",
+          "kind": "submit",
+          "state": "done",
+          "score": 9,
+          "maxScore": 9,
+          "languageId": 71,
+          "sourceCode": "s = input().strip()\nrev=\"\"\nfor ch in s:\n    rev=ch+rev\nprint(rev)    \n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:14:57.723Z",
+          "finishedAt": "2026-08-19T11:15:06.426Z",
+          "atMs": 237523,
+          "gradedInMs": 8703,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.1,
+          "peakMemoryKb": 3568,
+          "verdicts": {
+            "total": 9,
+            "passed": 9,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 9
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3208,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3196,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3328,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3568,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.025,
+              "memoryKb": 3256,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.025,
+              "memoryKb": 3236,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3092,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 8,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3324,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 9,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.1,
+              "memoryKb": 3216,
+              "hasOutput": false
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "code": "s = input().strip()\nrev=\"\"\nfor ch in s:\n    rev=ch+rev\nprint(rev)    \n\n# Your code here\n",
+        "languageId": 71,
+        "updatedAt": "2026-08-19T11:14:57.524Z",
+        "atMs": 237324,
+        "differsFromLastSubmission": false
+      },
+      "integrity": {
+        "keystrokes": 60,
+        "charsTyped": 72,
+        "activeMs": 47513,
+        "largestInsertion": 5,
+        "burstCount": 0,
+        "burstChars": 0,
+        "bursts": [],
+        "threshold": 40
+      },
+      "timeline": []
+    },
+    {
+      "problemId": "cmszss8cm0000flottwrtomx2",
+      "title": "Count Vowels",
+      "slug": "count-vowels",
+      "difficulty": "easy",
+      "ordinal": 3,
+      "points": 100,
+      "earned": 100,
+      "submissions": 1,
+      "runCount": 1,
+      "totalTestCases": 7,
+      "timeLimitMs": 2000,
+      "memoryLimitKb": 128000,
+      "languages": [
+        71
+      ],
+      "time": {
+        "estimatedMs": 196497,
+        "firstTouchMs": 411382,
+        "lastTouchMs": 434020,
+        "markers": 3,
+        "activeTypingMs": 85792,
+        "timeToBestMs": 434020,
+        "timeToFirstSubmitMs": 434020,
+        "timeToSolveMs": 434020
+      },
+      "bestAttempt": {
+        "id": "cmszzzx70002te44kad50c9qi",
+        "languageId": 71,
+        "sourceCode": "import sys\n\ns = sys.stdin.readline().rstrip('\\n')\ncount=0\nvowels=['a','e','i','o','u','A','E','I','O','U']\nfor ch in s:\n    if ch in vowels:\n        count+=1\nprint(count)        \n\n# Your code here\n",
+        "score": 7,
+        "maxScore": 7,
+        "atMs": 434020,
+        "casesPassed": 7,
+        "casesTotal": 7,
+        "runs": [
+          {
+            "ordinal": 1,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3336,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 2,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3244,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 3,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3252,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 4,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3208,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 5,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3260,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 6,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3208,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 7,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.016,
+            "memoryKb": 3232,
+            "hasOutput": false
+          }
+        ]
+      },
+      "history": [
+        {
+          "id": "cmszzzga6002ce44kkdfjffaj",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ns = sys.stdin.readline().rstrip('\\n')\ncount=0\nvowels=['a','e','i','o','u','A','E','I','O','U']\nfor ch in s:\n    if ch in vowels:\n        count+=1\nprint(count)        \n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:17:51.582Z",
+          "finishedAt": "2026-08-19T11:18:04.623Z",
+          "atMs": 411382,
+          "gradedInMs": 13041,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3240,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3240,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3136,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3188,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmszzzx70002te44kad50c9qi",
+          "kind": "submit",
+          "state": "done",
+          "score": 7,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ns = sys.stdin.readline().rstrip('\\n')\ncount=0\nvowels=['a','e','i','o','u','A','E','I','O','U']\nfor ch in s:\n    if ch in vowels:\n        count+=1\nprint(count)        \n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:18:14.220Z",
+          "finishedAt": "2026-08-19T11:18:26.951Z",
+          "atMs": 434020,
+          "gradedInMs": 12731,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3336,
+          "verdicts": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 7
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3336,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3244,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3252,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3208,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3208,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "code": "import sys\n\ns = sys.stdin.readline().rstrip('\\n')\ncount=0\nvowels=['a','e','i','o','u','A','E','I','O','U']\nfor ch in s:\n    if ch in vowels:\n        count+=1\nprint(count)        \n\n# Your code here\n",
+        "languageId": 71,
+        "updatedAt": "2026-08-19T11:18:14.021Z",
+        "atMs": 433821,
+        "differsFromLastSubmission": false
+      },
+      "integrity": {
+        "keystrokes": 119,
+        "charsTyped": 157,
+        "activeMs": 85792,
+        "largestInsertion": 9,
+        "burstCount": 0,
+        "burstChars": 0,
+        "bursts": [],
+        "threshold": 40
+      },
+      "timeline": []
+    },
+    {
+      "problemId": "cmszss8sg000gflothd9d0o0f",
+      "title": "Sum of Digits",
+      "slug": "sum-of-digits",
+      "difficulty": "easy",
+      "ordinal": 4,
+      "points": 100,
+      "earned": 0,
+      "submissions": 0,
+      "runCount": 0,
+      "totalTestCases": 7,
+      "timeLimitMs": 2000,
+      "memoryLimitKb": 128000,
+      "languages": [],
+      "time": {
+        "estimatedMs": 0,
+        "firstTouchMs": null,
+        "lastTouchMs": null,
+        "markers": 0,
+        "activeTypingMs": 0,
+        "timeToBestMs": null,
+        "timeToFirstSubmitMs": null,
+        "timeToSolveMs": null
+      },
+      "bestAttempt": null,
+      "history": [],
+      "draft": null,
+      "integrity": null,
+      "timeline": []
+    },
+    {
+      "problemId": "cmszss8lo0008flotfyh57kze",
+      "title": "Frequency of a Character",
+      "slug": "character-frequency",
+      "difficulty": "easy",
+      "ordinal": 5,
+      "points": 100,
+      "earned": 0,
+      "submissions": 0,
+      "runCount": 0,
+      "totalTestCases": 7,
+      "timeLimitMs": 2000,
+      "memoryLimitKb": 128000,
+      "languages": [],
+      "time": {
+        "estimatedMs": 134128,
+        "firstTouchMs": 4268624,
+        "lastTouchMs": 4268624,
+        "markers": 1,
+        "activeTypingMs": 43872,
+        "timeToBestMs": null,
+        "timeToFirstSubmitMs": null,
+        "timeToSolveMs": null
+      },
+      "bestAttempt": null,
+      "history": [],
+      "draft": {
+        "code": "s = input().strip()\nc = input().strip()\nfreq={}\n# Your code here\nfor ch in s:\n    freq[ch]=freq.get(ch,0)+1\nprint()    \n\n",
+        "languageId": 71,
+        "updatedAt": "2026-08-19T12:22:08.824Z",
+        "atMs": 4268624,
+        "differsFromLastSubmission": true
+      },
+      "integrity": {
+        "keystrokes": 53,
+        "charsTyped": 69,
+        "activeMs": 43872,
+        "largestInsertion": 5,
+        "burstCount": 0,
+        "burstChars": 0,
+        "bursts": [],
+        "threshold": 40
+      },
+      "timeline": []
+    },
+    {
+      "problemId": "cmszss9cc0014flotxi1vc41g",
+      "title": "Prime Number Check",
+      "slug": "prime-number-check",
+      "difficulty": "medium",
+      "ordinal": 6,
+      "points": 100,
+      "earned": 86,
+      "submissions": 18,
+      "runCount": 13,
+      "totalTestCases": 7,
+      "timeLimitMs": 2000,
+      "memoryLimitKb": 128000,
+      "languages": [
+        71
+      ],
+      "time": {
+        "estimatedMs": 1638836,
+        "firstTouchMs": 565060,
+        "lastTouchMs": 4137110,
+        "markers": 32,
+        "activeTypingMs": 173805,
+        "timeToBestMs": 3472184,
+        "timeToFirstSubmitMs": 813480,
+        "timeToSolveMs": null
+      },
+      "bestAttempt": {
+        "id": "cmt01t1gg00qw13uc3e5jveca",
+        "languageId": 71,
+        "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"    \n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+        "score": 6,
+        "maxScore": 7,
+        "atMs": 3472184,
+        "casesPassed": 6,
+        "casesTotal": 7,
+        "runs": [
+          {
+            "ordinal": 1,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3136,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 2,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3284,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 3,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3240,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 4,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3252,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 5,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3240,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 6,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3356,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 7,
+            "kind": "hidden",
+            "statusId": 4,
+            "timeS": 0.016,
+            "memoryKb": 3228,
+            "hasOutput": false
+          }
+        ]
+      },
+      "history": [
+        {
+          "id": "cmt002qb0003xe44kbsy1s2zn",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    for i in range(2,int(i**0.5)+1):\n        if n%i==0:\n            return True\n        else:    \n\n            return False\n\n\nn = int(input())\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:20:25.260Z",
+          "finishedAt": "2026-08-19T11:20:33.695Z",
+          "atMs": 565060,
+          "gradedInMs": 8435,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.022,
+          "peakMemoryKb": 3332,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3176,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3332,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3240,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt003n5u0049e44koida0xu3",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    for i in range(2,int(i**0.5)+1):\n        if n%i==0:\n            return True\n        else:    \n\n            return False\n\n\nn = int(input())\nresult=is_prime(n)\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:21:07.843Z",
+          "finishedAt": "2026-08-19T11:21:20.203Z",
+          "atMs": 607643,
+          "gradedInMs": 12360,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3344,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "11": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.023,
+              "memoryKb": 3340,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.024,
+              "memoryKb": 3260,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.024,
+              "memoryKb": 3344,
+              "hasOutput": true
+            }
+          ]
+        },
+        {
+          "id": "cmt004d03004113uczgionq4z",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return True\n        else:    \n\n            return False\n\n\nn = int(input())\nresult=is_prime(n)\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:21:41.331Z",
+          "finishedAt": "2026-08-19T11:21:48.468Z",
+          "atMs": 641131,
+          "gradedInMs": 7137,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.022,
+          "peakMemoryKb": 3388,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3388,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3232,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.021,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt006i67005ve44khi90tlcy",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return True\n        else:    \n\n            return False\n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:23:21.223Z",
+          "finishedAt": "2026-08-19T11:23:31.294Z",
+          "atMs": 741023,
+          "gradedInMs": 10071,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.022,
+          "peakMemoryKb": 3272,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3272,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3236,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3268,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt007t5e0073e44k7jya0ops",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n        else:    \n\n            return \"Prime\"\n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:24:21.632Z",
+          "finishedAt": "2026-08-19T11:24:28.382Z",
+          "atMs": 801432,
+          "gradedInMs": 6750,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3248,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3240,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3176,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3248,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt0081zk005p13ucei862f9f",
+          "kind": "submit",
+          "state": "done",
+          "score": 4,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n        else:    \n\n            return \"Prime\"\n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:24:33.680Z",
+          "finishedAt": "2026-08-19T11:24:41.323Z",
+          "atMs": 813480,
+          "gradedInMs": 7643,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3272,
+          "verdicts": {
+            "total": 7,
+            "passed": 4,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "3": 4,
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3168,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3140,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.024,
+              "memoryKb": 3256,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.024,
+              "memoryKb": 3256,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3268,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3272,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt00955r009le44kgob1r2mf",
+          "kind": "submit",
+          "state": "done",
+          "score": 5,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:25:23.985Z",
+          "finishedAt": "2026-08-19T11:25:35.269Z",
+          "atMs": 863785,
+          "gradedInMs": 11284,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3320,
+          "verdicts": {
+            "total": 7,
+            "passed": 5,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 5,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3320,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3276,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3100,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3292,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.024,
+              "memoryKb": 3144,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3272,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3228,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt009wch00a4e44kohqfg3gc",
+          "kind": "submit",
+          "state": "done",
+          "score": 5,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return False        \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:25:59.681Z",
+          "finishedAt": "2026-08-19T11:26:06.516Z",
+          "atMs": 899481,
+          "gradedInMs": 6835,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.058,
+          "peakMemoryKb": 3352,
+          "verdicts": {
+            "total": 7,
+            "passed": 5,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 5,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3212,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3288,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.046,
+              "memoryKb": 3124,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.058,
+              "memoryKb": 3352,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.024,
+              "memoryKb": 3296,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.028,
+              "memoryKb": 3220,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.018,
+              "memoryKb": 3228,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt00uuly00fme44k010fwgs9",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return False       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T11:42:17.206Z",
+          "finishedAt": "2026-08-19T11:42:25.756Z",
+          "atMs": 1877006,
+          "gradedInMs": 8550,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3264,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3224,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3264,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.015,
+              "memoryKb": 3236,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01mwnt00lle44k4p1j35mx",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<=2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return False       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:04:06.233Z",
+          "finishedAt": "2026-08-19T12:04:13.332Z",
+          "atMs": 3186033,
+          "gradedInMs": 7099,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3264,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3224,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3232,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3264,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01n6k100oj13uc7l61c3eg",
+          "kind": "submit",
+          "state": "done",
+          "score": 5,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<=2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return False       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:04:19.058Z",
+          "finishedAt": "2026-08-19T12:04:27.715Z",
+          "atMs": 3198858,
+          "gradedInMs": 8657,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3344,
+          "verdicts": {
+            "total": 7,
+            "passed": 5,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 5,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3344,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3104,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3108,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3296,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3212,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3300,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01nxcc00p013ucd6yq7879",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<=2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return True       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:04:53.773Z",
+          "finishedAt": "2026-08-19T12:05:00.734Z",
+          "atMs": 3233573,
+          "gradedInMs": 6961,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3352,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3316,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3352,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3264,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01o72y00p513uc2i0w67e6",
+          "kind": "submit",
+          "state": "done",
+          "score": 5,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<=2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return True       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:05:06.394Z",
+          "finishedAt": "2026-08-19T12:05:14.626Z",
+          "atMs": 3246194,
+          "gradedInMs": 8232,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3336,
+          "verdicts": {
+            "total": 7,
+            "passed": 5,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 5,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3132,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3244,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3336,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3220,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3108,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3312,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3256,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01pdzq00lve44kpq0b3qa2",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<=2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Not Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:06:02.007Z",
+          "finishedAt": "2026-08-19T12:06:08.356Z",
+          "atMs": 3301807,
+          "gradedInMs": 6349,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3268,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3268,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3192,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3264,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01psat00pk13ucesg94e1k",
+          "kind": "submit",
+          "state": "done",
+          "score": 5,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<=2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Not Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:06:20.550Z",
+          "finishedAt": "2026-08-19T12:06:28.030Z",
+          "atMs": 3320350,
+          "gradedInMs": 7480,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3296,
+          "verdicts": {
+            "total": 7,
+            "passed": 5,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 5,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3144,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3276,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3228,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3296,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3216,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3176,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.015,
+              "memoryKb": 3236,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01qfmh00q613uc1v8m2zll",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<=2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:06:50.777Z",
+          "finishedAt": "2026-08-19T12:06:57.165Z",
+          "atMs": 3350577,
+          "gradedInMs": 6388,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3260,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3216,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.015,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01qnsz00qc13uclj16h8ue",
+          "kind": "submit",
+          "state": "done",
+          "score": 5,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<=2:\n        return \"Not Prime\"\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:07:01.379Z",
+          "finishedAt": "2026-08-19T12:07:08.726Z",
+          "atMs": 3361179,
+          "gradedInMs": 7347,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3348,
+          "verdicts": {
+            "total": 7,
+            "passed": 5,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 5,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3348,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3308,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3308,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3280,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3340,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3164,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3268,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01t1gg00qw13uc3e5jveca",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"    \n    for i in range(2,int(n**0.5)+1):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:08:52.384Z",
+          "finishedAt": "2026-08-19T12:09:00.041Z",
+          "atMs": 3472184,
+          "gradedInMs": 7657,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3356,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3136,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3284,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3240,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3252,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3240,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3356,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3228,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01u3c900r713ucb8qjs6t3",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"    \n    for i in range(2,int(n**0.5+1)):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:09:41.482Z",
+          "finishedAt": "2026-08-19T12:09:48.225Z",
+          "atMs": 3521282,
+          "gradedInMs": 6743,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3312,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3220,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3312,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3228,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01ud7e00rd13uc7q45ni3n",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"    \n    for i in range(2,int(n**0.5+1)):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:09:54.267Z",
+          "finishedAt": "2026-08-19T12:10:02.139Z",
+          "atMs": 3534067,
+          "gradedInMs": 7872,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3340,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3320,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3340,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3324,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3140,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3144,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3228,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.015,
+              "memoryKb": 3260,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01uxuo00rq13ucnmeqh566",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"    \n    for i in range(2,int(n ** 0.5 +1)):\n        if n%i==0:\n            return \"Not Prime\"\n            \n        else:    \n\n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:10:21.021Z",
+          "finishedAt": "2026-08-19T12:10:28.974Z",
+          "atMs": 3560821,
+          "gradedInMs": 7953,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3304,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3272,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3200,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3304,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3232,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3296,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3224,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01z4a400nge44k7mvw1txu",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"    \n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:13:35.980Z",
+          "finishedAt": "2026-08-19T12:13:42.992Z",
+          "atMs": 3755780,
+          "gradedInMs": 7012,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3324,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3304,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3324,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3264,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3320,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3316,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3320,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt021qr800nye44kbheb9k19",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\"        \n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:15:38.421Z",
+          "finishedAt": "2026-08-19T12:15:45.595Z",
+          "atMs": 3878221,
+          "gradedInMs": 7174,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3316,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3316,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3116,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3260,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt02203s00u413uc4b9yxp3h",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\"        \n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \"Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:15:50.537Z",
+          "finishedAt": "2026-08-19T12:15:58.286Z",
+          "atMs": 3890337,
+          "gradedInMs": 7749,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3296,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3172,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3200,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3124,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3236,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3296,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3240,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3268,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt022ujt00o3e44k3tkzapau",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\"        \n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \"Not Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:16:29.993Z",
+          "finishedAt": "2026-08-19T12:16:39.002Z",
+          "atMs": 3929793,
+          "gradedInMs": 9009,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3284,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3124,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3284,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.015,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt0235vh00o9e44k4h3izhl4",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\"        \n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \"Not Prime\"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:16:44.669Z",
+          "finishedAt": "2026-08-19T12:16:53.766Z",
+          "atMs": 3944469,
+          "gradedInMs": 9097,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3356,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3308,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3308,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3356,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3344,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3340,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3352,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt0241kx00ole44k68oik13s",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\" \n\n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \" \"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:17:25.761Z",
+          "finishedAt": "2026-08-19T12:17:33.622Z",
+          "atMs": 3985561,
+          "gradedInMs": 7861,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3340,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3280,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3340,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.02,
+              "memoryKb": 3204,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3228,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3220,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3284,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt024un100p3e44k6l0nj5m0",
+          "kind": "submit",
+          "state": "done",
+          "score": 5,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\" \n\n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Prime\"    \n        else:    \n            return \"Prime\"\n    return \" \"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:18:03.422Z",
+          "finishedAt": "2026-08-19T12:18:11.604Z",
+          "atMs": 4023222,
+          "gradedInMs": 8182,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3292,
+          "verdicts": {
+            "total": 7,
+            "passed": 5,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 5,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3292,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3288,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3224,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3252,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3232,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3220,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt025p0000017a05uuaj0rn0",
+          "kind": "submit",
+          "state": "done",
+          "score": 4,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\" \n\n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Not Prime\"\n    return \" \"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:18:42.768Z",
+          "finishedAt": "2026-08-19T12:18:51.706Z",
+          "atMs": 4062568,
+          "gradedInMs": 8938,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3300,
+          "verdicts": {
+            "total": 7,
+            "passed": 4,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "3": 4,
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.021,
+              "memoryKb": 3300,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3284,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.021,
+              "memoryKb": 3120,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3244,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3300,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3172,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3224,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt026pa000ut13uc2q5cyhih",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\" \n\n    for i in range(2,int(n ** 0.5 +1)):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \" \"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:19:29.784Z",
+          "finishedAt": "2026-08-19T12:19:39.996Z",
+          "atMs": 4109584,
+          "gradedInMs": 10212,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3488,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3244,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3184,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3236,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3264,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3204,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3488,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3264,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt027aim00v813uc9btn19sc",
+          "kind": "submit",
+          "state": "done",
+          "score": 6,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\" \n\n    for i in range(2,int(n ** 0.5)+1):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \" \"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+          "createdAt": "2026-08-19T12:19:57.310Z",
+          "finishedAt": "2026-08-19T12:20:04.637Z",
+          "atMs": 4137110,
+          "gradedInMs": 7327,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3352,
+          "verdicts": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "pending": 0,
+            "byStatus": {
+              "3": 6,
+              "4": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3244,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3328,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3352,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3212,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3316,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3156,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.024,
+              "memoryKb": 3244,
+              "hasOutput": false
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "code": "def is_prime(n):\n    # Your code here\n    if n<2:\n        return \"Not Prime\"\n    if n==2:\n        return \"Prime\"\n    if n>1000000000:\n        return \"Not Prime\" \n\n    for i in range(2,int(n ** 0.5)+1):\n        if n % i==0:\n            return \"Not Prime\"    \n        else:    \n            return \"Prime\"\n    return \" \"       \n\n\nn = int(input())\nprint(is_prime(n))\n\n# Your code here\n",
+        "languageId": 71,
+        "updatedAt": "2026-08-19T12:19:57.102Z",
+        "atMs": 4136902,
+        "differsFromLastSubmission": false
+      },
+      "integrity": {
+        "keystrokes": 284,
+        "charsTyped": 421,
+        "activeMs": 173805,
+        "largestInsertion": 13,
+        "burstCount": 0,
+        "burstChars": 0,
+        "bursts": [],
+        "threshold": 40
+      },
+      "timeline": []
+    },
+    {
+      "problemId": "cmszss95w000wflot4dmo6p74",
+      "title": "Factorial Using a Function",
+      "slug": "factorial-of-a-number",
+      "difficulty": "medium",
+      "ordinal": 7,
+      "points": 100,
+      "earned": 100,
+      "submissions": 1,
+      "runCount": 4,
+      "totalTestCases": 7,
+      "timeLimitMs": 2000,
+      "memoryLimitKb": 128000,
+      "languages": [
+        71
+      ],
+      "time": {
+        "estimatedMs": 315009,
+        "firstTouchMs": 949157,
+        "lastTouchMs": 3637647,
+        "markers": 6,
+        "activeTypingMs": 55927,
+        "timeToBestMs": 3637647,
+        "timeToFirstSubmitMs": 3637647,
+        "timeToSolveMs": 3637647
+      },
+      "bestAttempt": {
+        "id": "cmt01wl4n00sn13ucb07wm5qw",
+        "languageId": 71,
+        "sourceCode": "def factorial(n):\n    # Your code here\n    if n<1:\n        return 1\n    else:\n        fact=1\n        num=n\n        return fact*factorial(n-1)*num  \n\n\n    return factorial(n)*factorial(n-1)\n\n\nn = int(input())\nprint(factorial(n))\n",
+        "score": 7,
+        "maxScore": 7,
+        "atMs": 3637647,
+        "casesPassed": 7,
+        "casesTotal": 7,
+        "runs": [
+          {
+            "ordinal": 1,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3292,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 2,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.022,
+            "memoryKb": 3144,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 3,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.021,
+            "memoryKb": 3256,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 4,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.022,
+            "memoryKb": 3196,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 5,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3248,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 6,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3272,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 7,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.015,
+            "memoryKb": 3548,
+            "hasOutput": false
+          }
+        ]
+      },
+      "history": [
+        {
+          "id": "cmt00azok006x13ucafa188xl",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def factorial(n):\n    # Your code here\n    return n*factorial(n-1)\n\n\nn = int(input())\nprint(factorial(n))\n",
+          "createdAt": "2026-08-19T11:26:49.357Z",
+          "finishedAt": "2026-08-19T11:26:58.892Z",
+          "atMs": 949157,
+          "gradedInMs": 9535,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.027,
+          "peakMemoryKb": 4004,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "11": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.027,
+              "memoryKb": 4004,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.027,
+              "memoryKb": 3988,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.018,
+              "memoryKb": 3996,
+              "hasOutput": true
+            }
+          ]
+        },
+        {
+          "id": "cmt00bt18007713ucrfdaf8xq",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def factorial(n):\n    # Your code here\n\n    return factorial(n)*factorial(n-1)\n\n\nn = int(input())\nprint(factorial(n))\n",
+          "createdAt": "2026-08-19T11:27:28.701Z",
+          "finishedAt": "2026-08-19T11:27:36.124Z",
+          "atMs": 988501,
+          "gradedInMs": 7423,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.025,
+          "peakMemoryKb": 4068,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "11": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.024,
+              "memoryKb": 3916,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.025,
+              "memoryKb": 3880,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.017,
+              "memoryKb": 4068,
+              "hasOutput": true
+            }
+          ]
+        },
+        {
+          "id": "cmt00y1pd00b5neddnvwg4irg",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def factorial(n):\n    # Your code here\n    if n<1:\n        return 1\n    else:\n        fact=1\n        return fact*factorial(n-1)    \n\n\n    return factorial(n)*factorial(n-1)\n\n\nn = int(input())\nprint(factorial(n))\n",
+          "createdAt": "2026-08-19T11:44:46.369Z",
+          "finishedAt": "2026-08-19T11:44:54.189Z",
+          "atMs": 2026169,
+          "gradedInMs": 7820,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3280,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3280,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3252,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3260,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01wbn300s713ucaai8tzu2",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "def factorial(n):\n    # Your code here\n    if n<1:\n        return 1\n    else:\n        fact=1\n        num=n\n        return fact*factorial(n-1)*num  \n\n\n    return factorial(n)*factorial(n-1)\n\n\nn = int(input())\nprint(factorial(n))\n",
+          "createdAt": "2026-08-19T12:11:25.552Z",
+          "finishedAt": "2026-08-19T12:11:32.081Z",
+          "atMs": 3625352,
+          "gradedInMs": 6529,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3360,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3220,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3360,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3228,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01wl4n00sn13ucb07wm5qw",
+          "kind": "submit",
+          "state": "done",
+          "score": 7,
+          "maxScore": 7,
+          "languageId": 71,
+          "sourceCode": "def factorial(n):\n    # Your code here\n    if n<1:\n        return 1\n    else:\n        fact=1\n        num=n\n        return fact*factorial(n-1)*num  \n\n\n    return factorial(n)*factorial(n-1)\n\n\nn = int(input())\nprint(factorial(n))\n",
+          "createdAt": "2026-08-19T12:11:37.847Z",
+          "finishedAt": "2026-08-19T12:11:44.526Z",
+          "atMs": 3637647,
+          "gradedInMs": 6679,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3548,
+          "verdicts": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 7
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3292,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3144,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.021,
+              "memoryKb": 3256,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3196,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3248,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3272,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.015,
+              "memoryKb": 3548,
+              "hasOutput": false
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "code": "def factorial(n):\n    # Your code here\n    if n<1:\n        return 1\n    else:\n        fact=1\n        num=n\n        return fact*factorial(n-1)*num  \n\n\n    return factorial(n)*factorial(n-1)\n\n\nn = int(input())\nprint(factorial(n))\n",
+        "languageId": 71,
+        "updatedAt": "2026-08-19T12:11:37.642Z",
+        "atMs": 3637442,
+        "differsFromLastSubmission": false
+      },
+      "integrity": {
+        "keystrokes": 103,
+        "charsTyped": 165,
+        "activeMs": 55927,
+        "largestInsertion": 9,
+        "burstCount": 0,
+        "burstChars": 0,
+        "bursts": [],
+        "threshold": 40
+      },
+      "timeline": []
+    },
+    {
+      "problemId": "cmss2a37t0000jfmzoug2our3",
+      "title": "Trapping Rain Water",
+      "slug": "trapping-rain-water",
+      "difficulty": "hard",
+      "ordinal": 8,
+      "points": 100,
+      "earned": 0,
+      "submissions": 0,
+      "runCount": 0,
+      "totalTestCases": 8,
+      "timeLimitMs": 3000,
+      "memoryLimitKb": 128000,
+      "languages": [],
+      "time": {
+        "estimatedMs": 0,
+        "firstTouchMs": null,
+        "lastTouchMs": null,
+        "markers": 0,
+        "activeTypingMs": 0,
+        "timeToBestMs": null,
+        "timeToFirstSubmitMs": null,
+        "timeToSolveMs": null
+      },
+      "bestAttempt": null,
+      "history": [],
+      "draft": null,
+      "integrity": null,
+      "timeline": []
+    },
+    {
+      "problemId": "cmss2a3rk000ijfmzdx9jk07y",
+      "title": "Sliding Window Maximum",
+      "slug": "sliding-window-maximum",
+      "difficulty": "hard",
+      "ordinal": 9,
+      "points": 100,
+      "earned": 100,
+      "submissions": 2,
+      "runCount": 18,
+      "totalTestCases": 8,
+      "timeLimitMs": 3000,
+      "memoryLimitKb": 128000,
+      "languages": [
+        71
+      ],
+      "time": {
+        "estimatedMs": 1336742,
+        "firstTouchMs": 1235393,
+        "lastTouchMs": 3711084,
+        "markers": 21,
+        "activeTypingMs": 166018,
+        "timeToBestMs": 3711084,
+        "timeToFirstSubmitMs": 2890172,
+        "timeToSolveMs": 3711084
+      },
+      "bestAttempt": {
+        "id": "cmt01y5sj00n0e44kdwxqxus8",
+        "languageId": 71,
+        "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\"\"    \n    for i in out:\n        p+=str(i)+\" \"\n    print(p)    \n\n\n\nmain()\n",
+        "score": 13,
+        "maxScore": 13,
+        "atMs": 3711084,
+        "casesPassed": 8,
+        "casesTotal": 8,
+        "runs": [
+          {
+            "ordinal": 1,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3212,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 2,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.022,
+            "memoryKb": 3304,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 3,
+            "kind": "sample",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3300,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 4,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3156,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 5,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3380,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 6,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3220,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 7,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.024,
+            "memoryKb": 3276,
+            "hasOutput": false
+          },
+          {
+            "ordinal": 8,
+            "kind": "hidden",
+            "statusId": 3,
+            "timeS": 0.023,
+            "memoryKb": 3188,
+            "hasOutput": false
+          }
+        ]
+      },
+      "history": [
+        {
+          "id": "cmt00h3oi0026neddfhw44dde",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n):\n        m=max(nums[i:k])\n        out.append(m)\n    return out    \n\nmain()\n",
+          "createdAt": "2026-08-19T11:31:35.593Z",
+          "finishedAt": "2026-08-19T11:31:43.269Z",
+          "atMs": 1235393,
+          "gradedInMs": 7676,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3284,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 1,
+              "11": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.023,
+              "memoryKb": 3240,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3284,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.016,
+              "memoryKb": 3264,
+              "hasOutput": true
+            }
+          ]
+        },
+        {
+          "id": "cmt00ieeb002oneddsc1xqleo",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n):\n        m=max(nums[i:k])\n        out.append(m)\n        print(nums[i:k])\n    return out    \n\nmain()\n",
+          "createdAt": "2026-08-19T11:32:36.185Z",
+          "finishedAt": "2026-08-19T11:32:43.480Z",
+          "atMs": 1295985,
+          "gradedInMs": 7295,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3308,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 1,
+              "11": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.024,
+              "memoryKb": 3144,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.021,
+              "memoryKb": 3228,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.022,
+              "memoryKb": 3308,
+              "hasOutput": true
+            }
+          ]
+        },
+        {
+          "id": "cmt00pd1o0063nedd7cde3phz",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n):\n        m=max(nums[i:k])\n        out.append(m)\n        print(nums[i:k])\n    print(nums[i:k])    \n\nmain()\n",
+          "createdAt": "2026-08-19T11:38:01.164Z",
+          "finishedAt": "2026-08-19T11:38:11.267Z",
+          "atMs": 1620964,
+          "gradedInMs": 10103,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3288,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 1,
+              "11": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.024,
+              "memoryKb": 3288,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.024,
+              "memoryKb": 3268,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.016,
+              "memoryKb": 3260,
+              "hasOutput": true
+            }
+          ]
+        },
+        {
+          "id": "cmt0113wv00gje44k0qcaw2dn",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n):\n        #m=max(nums[i:k])\n        out.append(m)\n        print(nums[i:k])\n    print(nums[i:k])    \n\nmain()\n",
+          "createdAt": "2026-08-19T11:47:09.200Z",
+          "finishedAt": "2026-08-19T11:47:16.974Z",
+          "atMs": 2169000,
+          "gradedInMs": 7774,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.025,
+          "peakMemoryKb": 3808,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "11": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.023,
+              "memoryKb": 3288,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.025,
+              "memoryKb": 3808,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.016,
+              "memoryKb": 3224,
+              "hasOutput": true
+            }
+          ]
+        },
+        {
+          "id": "cmt011mcm00ez13uci8e339oe",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n):\n        #m=max(nums[i:k])\n        #out.append(m)\n        print(nums[i:k])\n    print(nums[i:k])    \n\nmain()\n",
+          "createdAt": "2026-08-19T11:47:33.094Z",
+          "finishedAt": "2026-08-19T11:47:38.899Z",
+          "atMs": 2192894,
+          "gradedInMs": 5805,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3232,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3108,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3108,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt0126wk00fd13uce3vjj6jm",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n):\n        #m=max(nums[i:k])\n        #out.append(m)\n        print(nums[i:k])\n       \n\nmain()\n",
+          "createdAt": "2026-08-19T11:47:59.607Z",
+          "finishedAt": "2026-08-19T11:48:08.141Z",
+          "atMs": 2219407,
+          "gradedInMs": 8534,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.027,
+          "peakMemoryKb": 3268,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.027,
+              "memoryKb": 3268,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.027,
+              "memoryKb": 3128,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.017,
+              "memoryKb": 3220,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt013zos00g213ucep8r7oaw",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n):\n        m=nums[i:k]\n        k=max(m)\n\n        #out.append(m)\n        print(m)\n        k+=1\n       \n\nmain()\n",
+          "createdAt": "2026-08-19T11:49:23.692Z",
+          "finishedAt": "2026-08-19T11:49:30.103Z",
+          "atMs": 2303492,
+          "gradedInMs": 6411,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.022,
+          "peakMemoryKb": 3376,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 2,
+              "11": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.022,
+              "memoryKb": 3176,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3376,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3228,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt014fds00hse44kerdz2mqf",
+          "kind": "run",
+          "state": "done",
+          "score": 1,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n):\n        m=nums[i:k]\n        k=max(m)\n\n        #out.append(m)\n        print(k)\n        k+=1\n       \n\nmain()\n",
+          "createdAt": "2026-08-19T11:49:44.032Z",
+          "finishedAt": "2026-08-19T11:49:50.850Z",
+          "atMs": 2323832,
+          "gradedInMs": 6818,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3264,
+          "verdicts": {
+            "total": 3,
+            "passed": 1,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 1,
+              "4": 1,
+              "11": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.024,
+              "memoryKb": 3264,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3116,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3264,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt015c3d00go13ucv147g4qm",
+          "kind": "run",
+          "state": "done",
+          "score": 1,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        k=max(m)\n\n        #out.append(m)\n        print(k)\n        k+=1\n       \n\nmain()\n",
+          "createdAt": "2026-08-19T11:50:26.425Z",
+          "finishedAt": "2026-08-19T11:50:32.490Z",
+          "atMs": 2366225,
+          "gradedInMs": 6065,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3324,
+          "verdicts": {
+            "total": 3,
+            "passed": 1,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 1,
+              "4": 1,
+              "11": 1
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 11,
+              "timeS": 0.022,
+              "memoryKb": 3324,
+              "hasOutput": true
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3268,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3264,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt0172p800h513ucafq1wofj",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    print(out)   \n\nmain()\n",
+          "createdAt": "2026-08-19T11:51:47.564Z",
+          "finishedAt": "2026-08-19T11:51:54.924Z",
+          "atMs": 2447364,
+          "gradedInMs": 7360,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3340,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.024,
+              "memoryKb": 3336,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3340,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt019kmm0003hifexrdkh7pk",
+          "kind": "run",
+          "state": "done",
+          "score": 1,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    for i in out:\n        print(i)     \n\nmain()\n",
+          "createdAt": "2026-08-19T11:53:44.110Z",
+          "finishedAt": "2026-08-19T11:53:52.024Z",
+          "atMs": 2563910,
+          "gradedInMs": 7914,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3264,
+          "verdicts": {
+            "total": 3,
+            "passed": 1,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 1,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3264,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3224,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01b1wy00iq13uclil7u3z3",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    print()    \n\nmain()\n",
+          "createdAt": "2026-08-19T11:54:53.170Z",
+          "finishedAt": "2026-08-19T11:55:00.393Z",
+          "atMs": 2632970,
+          "gradedInMs": 7223,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3364,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3276,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3364,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01bojy00ibe44k8uwm7ff8",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    print(out)    \n\nmain()\n",
+          "createdAt": "2026-08-19T11:55:22.308Z",
+          "finishedAt": "2026-08-19T11:55:29.902Z",
+          "atMs": 2662108,
+          "gradedInMs": 7594,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3356,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3312,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3356,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.018,
+              "memoryKb": 3260,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01e5vp00ki13uc1f927uq7",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\" \"    \n    for i in out:\n        p+=str(i)\n    print(p)    \n\n\n\nmain()\n",
+          "createdAt": "2026-08-19T11:57:17.916Z",
+          "finishedAt": "2026-08-19T11:57:24.390Z",
+          "atMs": 2777716,
+          "gradedInMs": 6474,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3240,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.021,
+              "memoryKb": 3240,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3148,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3236,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01fb8h00jge44k30gb0ep6",
+          "kind": "run",
+          "state": "done",
+          "score": 1,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\" \"    \n    for i in out:\n        p=str(i)+\" \"\n    print(p)    \n\n\n\nmain()\n",
+          "createdAt": "2026-08-19T11:58:11.874Z",
+          "finishedAt": "2026-08-19T11:58:20.029Z",
+          "atMs": 2831674,
+          "gradedInMs": 8155,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3260,
+          "verdicts": {
+            "total": 3,
+            "passed": 1,
+            "failed": 2,
+            "pending": 0,
+            "byStatus": {
+              "3": 1,
+              "4": 2
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3148,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3228,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3260,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01fuzh00lf13ucs3o58wuv",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\" \"    \n    for i in out:\n        p+=str(i)+\" \"\n    print(p)    \n\n\n\nmain()\n",
+          "createdAt": "2026-08-19T11:58:37.037Z",
+          "finishedAt": "2026-08-19T11:58:43.671Z",
+          "atMs": 2856837,
+          "gradedInMs": 6634,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3360,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.021,
+              "memoryKb": 3360,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3172,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01gkdf00lr13ucilgq1hoj",
+          "kind": "submit",
+          "state": "done",
+          "score": 0,
+          "maxScore": 13,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\" \"    \n    for i in out:\n        p+=str(i)+\" \"\n    print(p)    \n\n\n\nmain()\n",
+          "createdAt": "2026-08-19T11:59:10.372Z",
+          "finishedAt": "2026-08-19T11:59:19.499Z",
+          "atMs": 2890172,
+          "gradedInMs": 9127,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3376,
+          "verdicts": {
+            "total": 8,
+            "passed": 0,
+            "failed": 8,
+            "pending": 0,
+            "byStatus": {
+              "4": 8
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.021,
+              "memoryKb": 3164,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3264,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3184,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3232,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3188,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3376,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.024,
+              "memoryKb": 3300,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 8,
+              "kind": "hidden",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3184,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01x76200t213ucue9wv91n",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\" \"    \n    for i in out:\n        p+=str(i)+\" \"\n    print(p)    \n\n\n\nmain()\n",
+          "createdAt": "2026-08-19T12:12:06.212Z",
+          "finishedAt": "2026-08-19T12:12:12.833Z",
+          "atMs": 3666012,
+          "gradedInMs": 6621,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3236,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.023,
+              "memoryKb": 3140,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3236,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01xvq300mue44khk3ccfci",
+          "kind": "run",
+          "state": "done",
+          "score": 3,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\"\"    \n    for i in out:\n        p+=str(i)+\" \"\n    print(p)    \n\n\n\nmain()\n",
+          "createdAt": "2026-08-19T12:12:38.236Z",
+          "finishedAt": "2026-08-19T12:12:45.085Z",
+          "atMs": 3698036,
+          "gradedInMs": 6849,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.023,
+          "peakMemoryKb": 3296,
+          "verdicts": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3296,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3192,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.016,
+              "memoryKb": 3260,
+              "hasOutput": false
+            }
+          ]
+        },
+        {
+          "id": "cmt01y5sj00n0e44kdwxqxus8",
+          "kind": "submit",
+          "state": "done",
+          "score": 13,
+          "maxScore": 13,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\"\"    \n    for i in out:\n        p+=str(i)+\" \"\n    print(p)    \n\n\n\nmain()\n",
+          "createdAt": "2026-08-19T12:12:51.284Z",
+          "finishedAt": "2026-08-19T12:13:00.299Z",
+          "atMs": 3711084,
+          "gradedInMs": 9015,
+          "changedSincePrevious": false,
+          "slowestCaseS": 0.024,
+          "peakMemoryKb": 3380,
+          "verdicts": {
+            "total": 8,
+            "passed": 8,
+            "failed": 0,
+            "pending": 0,
+            "byStatus": {
+              "3": 8
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3212,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.022,
+              "memoryKb": 3304,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3300,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 4,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3156,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 5,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3380,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 6,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3220,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 7,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.024,
+              "memoryKb": 3276,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 8,
+              "kind": "hidden",
+              "statusId": 3,
+              "timeS": 0.023,
+              "memoryKb": 3188,
+              "hasOutput": false
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "code": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n, k = map(int, data[0].split())\n    nums = list(map(int, data[1].split()))\n    out=[]\n    # Your code here — compute the max of every window of size k\n    for i in range(n-k+1):\n        m=nums[i:k]\n        j=max(m)\n\n        out.append(j)\n        k+=1\n    p=\"\"    \n    for i in out:\n        p+=str(i)+\" \"\n    print(p)    \n\n\n\nmain()\n",
+        "languageId": 71,
+        "updatedAt": "2026-08-19T12:12:50.881Z",
+        "atMs": 3710681,
+        "differsFromLastSubmission": false
+      },
+      "integrity": {
+        "keystrokes": 229,
+        "charsTyped": 377,
+        "activeMs": 166018,
+        "largestInsertion": 9,
+        "burstCount": 0,
+        "burstChars": 0,
+        "bursts": [],
+        "threshold": 40
+      },
+      "timeline": []
+    },
+    {
+      "problemId": "cmss2a3ii0009jfmz486b1w39",
+      "title": "Largest Rectangle in Histogram",
+      "slug": "largest-rectangle-histogram",
+      "difficulty": "hard",
+      "ordinal": 10,
+      "points": 100,
+      "earned": 0,
+      "submissions": 0,
+      "runCount": 1,
+      "totalTestCases": 8,
+      "timeLimitMs": 3000,
+      "memoryLimitKb": 128000,
+      "languages": [
+        71
+      ],
+      "time": {
+        "estimatedMs": 412503,
+        "firstTouchMs": 1529146,
+        "lastTouchMs": 3069514,
+        "markers": 2,
+        "activeTypingMs": 43975,
+        "timeToBestMs": null,
+        "timeToFirstSubmitMs": null,
+        "timeToSolveMs": null
+      },
+      "bestAttempt": null,
+      "history": [
+        {
+          "id": "cmt00nedp00am13ucawzbcdc8",
+          "kind": "run",
+          "state": "done",
+          "score": 0,
+          "maxScore": 3,
+          "languageId": 71,
+          "sourceCode": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n = int(data[0].strip())\n    heights = list(map(int, data[1].split())) if n > 0 else []\n    # Your code here — compute the largest rectangle area\n    print(0)\n\nmain()\n",
+          "createdAt": "2026-08-19T11:36:29.346Z",
+          "finishedAt": "2026-08-19T11:36:37.142Z",
+          "atMs": 1529146,
+          "gradedInMs": 7796,
+          "changedSincePrevious": true,
+          "slowestCaseS": 0.022,
+          "peakMemoryKb": 3260,
+          "verdicts": {
+            "total": 3,
+            "passed": 0,
+            "failed": 3,
+            "pending": 0,
+            "byStatus": {
+              "4": 3
+            }
+          },
+          "cases": [
+            {
+              "ordinal": 1,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3172,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 2,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.022,
+              "memoryKb": 3260,
+              "hasOutput": false
+            },
+            {
+              "ordinal": 3,
+              "kind": "sample",
+              "statusId": 4,
+              "timeS": 0.016,
+              "memoryKb": 3232,
+              "hasOutput": false
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "code": "import sys\n\ndef main():\n    data = sys.stdin.read().split('\\n')\n    n = int(data[0].strip())\n    heights = list(map(int, data[1].split())) if n > 0 else []\n    # Your code here — compute the largest rectangle area\n    area=0\n    for i in range(n):\n        if heights[i]>height[i+1]:\n            area=\n\n        \n        \n    print(0)\n\nmain()\n",
+        "languageId": 71,
+        "updatedAt": "2026-08-19T12:02:09.714Z",
+        "atMs": 3069514,
+        "differsFromLastSubmission": true
+      },
+      "integrity": {
+        "keystrokes": 67,
+        "charsTyped": 122,
+        "activeMs": 43975,
+        "largestInsertion": 13,
+        "burstCount": 0,
+        "burstChars": 0,
+        "bursts": [],
+        "threshold": 40
+      },
+      "timeline": []
+    }
+  ]
+}
